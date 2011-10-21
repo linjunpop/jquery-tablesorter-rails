@@ -7,12 +7,13 @@ The original jQuery plugin is [http://tablesorter.com/](http://tablesorter.com/)
 
 Install
 ---
+Install with
 
-`gem install jquery-tablesorter`
+	gem install jquery-tablesorter
 
 or in your Gemfile
 
-`gem jquery-tablesorter`
+	gem 'jquery-tablesorter'
 
 Requirements
 ---
@@ -24,11 +25,13 @@ Usage
 
 In your javascript file include the following
 
-`require jquery-tablesorter/jquery-tablesorter`
+	require jquery-tablesorter/jquery-tablesorter
+	require jquery-tablesorter/pager # pagination plugin
+
 
 And stylesheet
 
-`require jquery-tablesorter/<theme name>`
+	require jquery-tablesorter/<theme name>
 
 Avaliable theme names:
 
