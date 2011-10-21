@@ -24,7 +24,7 @@ Usage
 
 In your javascript file include the following
 
-`require jquery-tablesorter/jquery-tablesorter`
+`require jquery-tablesorter`
 
 And stylesheet
 
