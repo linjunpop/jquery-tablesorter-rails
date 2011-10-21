@@ -5,6 +5,15 @@ Simple integration of jquery-tablesorter into the asset pipeline.
 
 The original jQuery plugin is [http://tablesorter.com/](http://tablesorter.com/)
 
+Install
+---
+
+`gem install jquery-tablesorter`
+
+or in your Gemfile
+
+`gem jquery-tablesorter`
+
 Requirements
 ---
 
