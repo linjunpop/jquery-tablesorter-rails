@@ -36,3 +36,18 @@ Avaliable theme names:
 
 * green
 * blue
+
+Changelog
+---
+#### v0.0.3
+
+* NEW: added pagenation plugin, use `require jquery-tablesorter/pager` to require
+* FIX: use `require jquery-tablesorter` instead of `require jquery-tablesorter/jquery-tablesorter`, the old way to require will still works, but will be removed in future.
+
+#### v0.0.2
+
+* FIX: test issues.
+
+#### v0.0.1
+
+* NEW: added jquery-tablesorter plugin, use `require jquery-tablesorter/jquery-tablesorter` to require javascript and `require jquery-tablesorter/<theme name>` to require stylesheet.
