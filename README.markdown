@@ -39,6 +39,11 @@ Avaliable theme names:
 
 Changelog
 ---
+
+#### v0.0.4
+
+* FIX: update gemspec to be compatible with Rails 3.2, Thanks to [derekprior](https://github.com/derekprior).
+
 #### v0.0.3
 
 * NEW: added pagenation plugin, use `require jquery-tablesorter/pager` to require
