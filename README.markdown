@@ -26,7 +26,6 @@ Usage
 In your javascript file include the following
 
 	require jquery-tablesorter
-	require jquery-tablesorter/pager # pagination plugin
 
 And stylesheet
 
