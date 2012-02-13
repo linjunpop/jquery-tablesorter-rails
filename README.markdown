@@ -7,34 +7,42 @@ The original jQuery plugin is [http://tablesorter.com/](http://tablesorter.com/)
 
 Install
 ---
-Install with
+In your Gemfile
 
-	gem install jquery-tablesorter
-
-or in your Gemfile
-
-	gem 'jquery-tablesorter'
+```
+gem 'jquery-tablesorter'
+```
 
 Requirements
 ---
 
-Requires Rails 3.1 and higher
+Rails 3.1 and higher
 
 Usage
 ---
 
 In your javascript file include the following
 
-	require jquery-tablesorter
+```
+require jquery-tablesorter
+```
 
 And stylesheet
 
-	require jquery-tablesorter/<theme name>
+```
+require jquery-tablesorter/<theme name>
+```
 
 Avaliable theme names:
 
 * green
 * blue
+
+In CoffeeScript file:
+
+```
+$('table').tablesorter()
+```
 
 Changelog
 ---
