@@ -47,6 +47,13 @@ $('table').tablesorter()
 Changelog
 ---
 
+#### v0.0.5
+
+* FIX: now require pager plugin as default.
+* FIX: move assets files from app to vendor & cleanup.
+* FIX: remove dependency on `jquery-rails`
+* FIX: remove development dependency on `sqlite3`
+
 #### v0.0.4
 
 * FIX: update gemspec to be compatible with Rails 3.2, Thanks to [derekprior](https://github.com/derekprior).
