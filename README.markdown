@@ -36,6 +36,15 @@ require jquery-tablesorter
 this will require `jquery.metadata`, `jquery.tablesorter`,
 `jquery.tablesorter.widgets`
 
+Or you can include single file with:
+
+```
+require jquery-tablesorter/jquery.metadata
+require jquery-tablesorter/jquery.tablesorter
+require jquery-tablesorter/jquery.widgets
+```
+
+
 ### In your `application.css`
 
 ```
