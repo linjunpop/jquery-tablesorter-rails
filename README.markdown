@@ -41,7 +41,7 @@ Or you can include single file with:
 ```
 require jquery-tablesorter/jquery.metadata
 require jquery-tablesorter/jquery.tablesorter
-require jquery-tablesorter/jquery.widgets
+require jquery-tablesorter/jquery.tablesorter.widgets
 ```
 
 
