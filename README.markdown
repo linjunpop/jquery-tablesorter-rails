@@ -3,7 +3,7 @@ jQuery Table Sorter plugin for Rails
 
 Simple integration of jquery-tablesorter into the asset pipeline.
 
-The original jQuery plugin is [http://tablesorter.com/](http://tablesorter.com/)
+Vendored ersion
 
 Install
 ---
@@ -21,13 +21,16 @@ Rails 3.1 and higher
 Usage
 ---
 
-In your javascript file include the following
+### In your `application.js`
 
 ```
 require jquery-tablesorter
 ```
 
-And stylesheet
+this will require `jquery.metadata`, `jquery.tablesorter`,
+`jquery.tablesorter.widgets`
+
+### In your `application.css`
 
 ```
 require jquery-tablesorter/<theme name>
@@ -35,17 +38,21 @@ require jquery-tablesorter/<theme name>
 
 Avaliable theme names:
 
-* green
 * blue
+* ui
 
-In CoffeeScript file:
+### In CoffeeScript file:
 
 ```
-$('table').tablesorter()
+$('table.tablesorter').tablesorter()
 ```
 
 Changelog
 ---
+
+#### V1.0.0
+
+* Use [Mottie's fork of tablesorter], V2.3.4
 
 #### v0.0.5
 
@@ -56,7 +63,7 @@ Changelog
 
 #### v0.0.4
 
-* FIX: update gemspec to be compatible with Rails 3.2, Thanks to [derekprior](https://github.com/derekprior).
+* FIX: update gemspec to be compatible with Rails 3.2, Thanks to [derekprior].
 
 #### v0.0.3
 
@@ -70,3 +77,8 @@ Changelog
 #### v0.0.1
 
 * NEW: added jquery-tablesorter plugin, use `require jquery-tablesorter/jquery-tablesorter` to require javascript and `require jquery-tablesorter/<theme name>` to require stylesheet.
+
+
+[Mottie's fork of tablesorter]: https://github.com/Mottie/tablesorter
+[derekprior]: https://github.com/derekprior
+

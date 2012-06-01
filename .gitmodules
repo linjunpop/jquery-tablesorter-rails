@@ -1,0 +1,3 @@
+[submodule "tablesorter"]
+	path = tablesorter
+	url = https://github.com/Mottie/tablesorter.git

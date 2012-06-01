@@ -1,2 +1,1 @@
-//= require jquery-tablesorter/jquery-tablesorter
-//= require jquery-tablesorter/pager
+//= require_tree ./jquery-tablesorter
