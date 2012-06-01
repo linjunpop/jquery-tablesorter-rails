@@ -3,6 +3,8 @@ jQuery Table Sorter plugin for Rails
 
 Simple integration of jquery-tablesorter into the asset pipeline.
 
+Current version: 2.3.4
+
 NOTICE:
 ---
 
