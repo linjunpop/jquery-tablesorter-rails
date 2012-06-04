@@ -3,9 +3,10 @@ jQuery Table Sorter plugin for Rails
 
 Simple integration of jquery-tablesorter into the asset pipeline.
 
-Current version: 2.3.7(6/3/2012)
+Current version: 2.3.7(6/3/2012), [documentation]
 
 Any issue associate with the js/css files, please report to [Mottie's fork].
+
 
 NOTICE:
 ---
@@ -65,4 +66,5 @@ $('table.tablesorter').tablesorter()
 ```
 
 [Mottie's fork]: https://github.com/Mottie/tablesorter
+[documentation]: http://mottie.github.com/tablesorter/docs/index.html
 
