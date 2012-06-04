@@ -1,5 +1,5 @@
-/*!
-* TableSorter 2.3.4 - Client-side table sorting with ease!
+﻿/*!
+* TableSorter 2.3.7 - Client-side table sorting with ease!
 * @requires jQuery v1.2.6+
 *
 * Copyright (c) 2007 Christian Bach
@@ -18,13 +18,13 @@
 	$.extend({
 		tablesorter: new function() {
 
-			this.version = "2.3.4";
+			this.version = "2.3.7";
 
 			var parsers = [], widgets = [];
 			this.defaults = {
 
 				// appearance
-				widthFixed       : false,
+				widthFixed       : false,      // adds colgroup to fix widths of columns
 
 				// functionality
 				cancelSelection  : true,       // prevent text selection in the header
@@ -51,9 +51,11 @@
 				textSorter       : null,       // use custom text sorter - function(a,b){ return a.sort(b); } // basic sort
 
 				// widget options
+				widgets: [],                   // method to add widgets, e.g. widgets: ['zebra']
 				widgetOptions    : {
 					zebra : [ "even", "odd" ]    // zebra widget alternating row class names
 				},
+				initWidgets      : true,       // apply widgets on tablesorter initialization
 
 				// callbacks
 				initialized      : null,       // function(table){},
@@ -78,8 +80,7 @@
 				headerList: [],
 				empties: {},
 				strings: {},
-				parsers: [],
-				widgets: []
+				parsers: []
 
 				// deprecated; but retained for backwards compatibility
 				// widgetZebra: { css: ["even", "odd"] }
@@ -103,17 +104,26 @@
 			this.hasInitialized = false;
 
 			function getElementText(table, node, cellIndex) {
-				var text = "", t = table.config.textExtraction;
 				if (!node) { return ""; }
+				var c = table.config,
+					t = c.textExtraction, text = "";
 				if (t === "simple") {
-					text = $(node).text();
+					if (c.supportsTextContent) {
+						text = node.textContent; // newer browsers support this
+					} else {
+						if (node.childNodes[0] && node.childNodes[0].hasChildNodes()) {
+							text = node.childNodes[0].innerHTML;
+						} else {
+							text = node.innerHTML;
+						}
+					}
 				} else {
 					if (typeof(t) === "function") {
 						text = t(node, table, cellIndex);
 					} else if (typeof(t) === "object" && t.hasOwnProperty(cellIndex)) {
 						text = t[cellIndex](node, table, cellIndex);
 					} else {
-						text = $(node).text();
+						text = c.supportsTextContent ? node.textContent : $(node).text();
 					}
 				}
 				return $.trim(text);
@@ -141,7 +151,7 @@
 						node = rows[rowIndex].cells[cellIndex];
 						nodeValue = getElementText(table, node, cellIndex);
 						if (table.config.debug) {
-							log('Checking if value was empty on row ' + rowIndex + ', column:' + cellIndex + ": " + nodeValue);
+							log('Checking if value was empty on row ' + rowIndex + ', column: ' + cellIndex + ': ' + nodeValue);
 						}
 					} else {
 						keepLooking = false;
@@ -157,8 +167,9 @@
 			}
 
 			function buildParserCache(table, $headers) {
-					var c = table.config, tb = $(table.tBodies).filter(':not(.' + c.cssInfoBlock + ')'),
-						ts = $.tablesorter, rows, list, l, i, h, m, ch, cl, p, parsersDebug = "";
+				var c = table.config,
+					tb = $(table.tBodies).filter(':not(.' + c.cssInfoBlock + ')'),
+					ts = $.tablesorter, rows, list, l, i, h, m, ch, cl, p, parsersDebug = "";
 				if ( tb.length === 0) { return; } // In the case of empty tables
 				rows = tb[0].rows;
 				if (rows[0]) {
@@ -190,19 +201,6 @@
 			}
 
 			/* utils */
-			function buildRegex(){
-				var a, acc = '[', t = $.tablesorter,
-					reg = t.characterEquivalents;
-				t.characterRegexArray = {};
-				for (a in reg) {
-					if (typeof a === 'string') {
-						acc += reg[a];
-						t.characterRegexArray[a] = new RegExp('[' + reg[a] + ']', 'g');
-					}
-				}
-				t.characterRegex = new RegExp(acc + ']');
-			}
-
 			function buildCache(table) {
 				var b = table.tBodies,
 				tc = table.config,
@@ -218,6 +216,7 @@
 					tc.cache[k] = { row: [], normalized: [] };
 					// ignore tbodies with class name from css.cssInfoBlock
 					if (!$(b[k]).hasClass(tc.cssInfoBlock)) {
+						$(b[k]).addClass('tablesorter-hidden');
 						totalRows = (b[k] && b[k].rows.length) || 0;
 						totalCells = (b[k].rows[0] && b[k].rows[0].cells.length) || 0;
 						for (i = 0; i < totalRows; ++i) {
@@ -240,6 +239,7 @@
 							cols.push(tc.cache[k].normalized.length); // add position for rowCache
 							tc.cache[k].normalized.push(cols);
 						}
+						$(b[k]).removeClass('tablesorter-hidden');
 					}
 				}
 				if (tc.debug) {
@@ -258,21 +258,28 @@
 			}
 
 			function applyWidget(table, init) {
-				var c = table.config.widgets,
-				i, w, l = c.length;
+				var tc = table.config, c = tc.widgets,
+				time, i, w, l = c.length;
+				if (tc.debug) {
+					time = new Date();
+				}
 				for (i = 0; i < l; i++) {
 					w = getWidgetById(c[i]);
 					if ( w ) {
-						if (init && w.hasOwnProperty('init')) {
+						if (init === true && w.hasOwnProperty('init')) {
 							w.init(table, widgets, w);
 						} else if (!init && w.hasOwnProperty('format')) {
 							w.format(table);
 						}
 					}
 				}
+				if (tc.debug) {
+					benchmark("Completed " + (init === true ? "initializing" : "applying") + " widgets", time);
+				}
 			}
 
-			function appendToTable(table) {
+			// init flag (true) used by pager plugin to prevent widget application
+			function appendToTable(table, init) {
 				var c = table.config,
 				b = table.tBodies,
 				rows = [],
@@ -283,6 +290,7 @@
 				}
 				for (k = 0; k < b.length; k++) {
 					if (!$(b[k]).hasClass(c.cssInfoBlock)){
+						$(b[k]).addClass('tablesorter-hidden');
 						f = document.createDocumentFragment();
 						r = c2[k].row;
 						n = c2[k].normalized;
@@ -300,6 +308,7 @@
 							}
 						}
 						table.tBodies[k].appendChild(f);
+						$(b[k]).removeClass('tablesorter-hidden');
 					}
 				}
 				if (c.appender) {
@@ -309,15 +318,15 @@
 					benchmark("Rebuilt table", appendTime);
 				}
 				// apply table widgets
-				applyWidget(table);
+				if (!init) { applyWidget(table); }
 				// trigger sortend
 				$(table).trigger("sortEnd", table);
 			}
 
-			// from:
+			// computeTableHeaderCellIndexes from:
 			// http://www.javascripttoolbox.com/lib/table/examples.php
 			// http://www.javascripttoolbox.com/temp/table_cellindex.html
-			function computeTableHeaderCellIndexes(t) {
+			function computeThIndexes(t) {
 				var matrix = [],
 				lookup = {},
 				trs = $(t).find('thead:eq(0) tr'),
@@ -362,19 +371,20 @@
 				return (/^d/i.test(v) || v === 1);
 			}
 
+
 			function buildHeaders(table) {
-				var meta = ($.metadata) ? true : false,
-				header_index = computeTableHeaderCellIndexes(table), ch, $t,
-				$th, lock, time, $tableHeaders, c = table.config, ts = $.tablesorter;
-				c.headerList = [];
+				var header_index = computeThIndexes(table), ch, $t,
+					$th, lock, time, $tableHeaders, c = table.config, ts = $.tablesorter;
+					c.headerList = [];
 				if (c.debug) {
 					time = new Date();
 				}
-				$tableHeaders = $(c.selectorHeaders, table)
-				.wrapInner("<div class='tablesorter-header-inner' />")
+				$tableHeaders = $(table).find(c.selectorHeaders)
 				.each(function(index) {
 					$t = $(this);
 					ch = c.headers[index];
+					this.innerHTML = '<div class="tablesorter-header-inner">' + this.innerHTML + '</div>'; // faster than wrapInner
+					if (c.onRenderHeader) { c.onRenderHeader.apply($th, [index]); }
 					this.column = header_index[this.parentNode.rowIndex + "-" + this.cellIndex];
 					this.order = formatSortingOrder( ts.getData($t, ch, 'sortInitialOrder') || c.sortInitialOrder ) ? [1,0,2] : [0,1,2];
 					this.count = -1; // set to -1 because clicking on the header automatically adds one
@@ -386,15 +396,14 @@
 					}
 					if (!this.sortDisabled) {
 						$th = $t.addClass(c.cssHeader);
-						if (c.onRenderHeader) { c.onRenderHeader.apply($th, [index]); }
 					}
 					// add cell to headerList
 					c.headerList[index] = this;
 					// add to parent in case there are multiple rows
 					$t.parent().addClass(c.cssHeader);
 				});
-				if (c.debug) {
-					benchmark("Built headers", time);
+				if (table.config.debug) {
+					benchmark("Built headers:", time);
 					log($tableHeaders);
 				}
 				return $tableHeaders;
@@ -423,7 +432,10 @@
 				l = list.length;
 				for (i = 0; i < l; i++) {
 					if (list[i][1] === 2) { continue; } // direction = 2 means reset!
-					h[list[i][0]].addClass(css[list[i][1]]);
+					if (h[list[i][0]]) {
+						// add class if cell exists - fix for issue #78
+						h[list[i][0]].addClass(css[list[i][1]]);
+					}
 					// multicolumn sorting updating
 					f = $headers.filter('[data-column="' + list[i][0] + '"]');
 					if (l > 1 && f.length) {
@@ -457,7 +469,7 @@
 			}
 
 			function getCachedSortType(parsers, i) {
-				return (parsers) ? parsers[i].type : '';
+				return (parsers && parsers[i]) ? parsers[i].type || '' : '';
 			}
 
 			/* sorting methods - reverted sorting method back to version 2.0.3 */
@@ -490,7 +502,7 @@
 								dir = (tc.strings[c]) ? tc.string[tc.strings[c]] || 0 : 0;
 							}
 						}
-						dynamicExp += "var " + e + " = sort" + s + "(table, a[" + c + "],b[" + c + "]," + c + "," + mx +  "," + dir + "); ";
+						dynamicExp += "var " + e + " = sort" + s + "(table,a[" + c + "],b[" + c + "]," + c + "," + mx +  "," + dir + "); ";
 						dynamicExp += "if (" + e + ") { return " + e + "; } ";
 						dynamicExp += "else { ";
 					}
@@ -596,8 +608,8 @@
 					// if no thead or tbody quit.
 					if (!this.tHead || this.tBodies.length === 0) { return; }
 					// declare
-					var $headers, $cell, totalRows, $this,
-						config, c, i, j, k, a, s, o,
+					var $headers, $cell, $this,
+						config, c, i, j, k, a, s, o, downTime,
 						m = $.metadata;
 					// new blank config object
 					this.config = {};
@@ -609,8 +621,7 @@
 					$this = $(this).addClass(c.tableClass);
 					// save the settings where they read
 					$.data(this, "tablesorter", c);
-					// build up character equivalent cross-reference
-					buildRegex();
+					c.supportsTextContent = $('<span>x</span>')[0].textContent === 'x';
 					// digit sort text location; keeping max+/- for backwards compatibility
 					c.string = { 'max': 1, 'min': -1, 'max+': 1, 'max-': -1, 'zero': 0, 'none': 0, 'null': 0, 'top': true, 'bottom': false };
 					// build headers
@@ -624,8 +635,14 @@
 					fixColumnWidth(this);
 					// apply event handling to headers
 					// this is to big, perhaps break it out?
-					$headers
-					.click(function(e) {
+					$headers.bind('mousedown.tablesorter mouseup.tablesorter', function(e, external) {
+						if (e.type === 'mousedown') {
+							downTime = new Date().getTime();
+							return !c.cancelSelection;
+						}
+
+						// prevent resizable widget from initializing a sort (long clicks are ignored)
+						if (external !== true && (new Date().getTime() - downTime > 500)) { return false; }
 						if (c.delayInit && !c.cache) { buildCache($this[0]); }
 						if (!this.sortDisabled) {
 							// Only call sortStart if sorting is enabled.
@@ -712,20 +729,20 @@
 							$this.trigger("sortBegin", $this[0]);
 							// set css for headers
 							setHeadersCss($this[0], $headers, c.sortList);
-							appendToTable($this[0], multisort($this[0], c.sortList));
+							multisort($this[0], c.sortList);
+							appendToTable($this[0]);
 							// stop normal event by returning false
 							return false;
 						}
+					});
+					if (c.cancelSelection) {
 						// cancel selection
-					})
-					.mousedown(function() {
-						if (c.cancelSelection) {
+						$headers.each(function() {
 							this.onselectstart = function() {
 								return false;
 							};
-							return false;
-						}
-					});
+						});
+					}
 					// apply easy methods that trigger binded events
 					$this
 					.bind("update", function(e, resort) {
@@ -739,9 +756,11 @@
 					})
 					.bind("updateCell", function(e, cell, resort) {
 						// get position from the dom.
-						var t = this, pos = [(cell.parentNode.rowIndex - 1), cell.cellIndex],
+						var t = this, $tb = $(this).find('tbody'), row, pos,
 						// update cache - format: function(s, table, cell, cellIndex)
-						tbdy = $(this).find('tbody').index( $(cell).closest('tbody') );
+						tbdy = $tb.index( $(cell).closest('tbody') );
+						row = $tb.eq(tbdy).find('tr').index( $(cell).closest('tr') );
+						pos = [ row, cell.cellIndex];
 						t.config.cache[tbdy].normalized[pos[0]][pos[1]] = c.parsers[pos[1]].format( getElementText(t, cell, pos[1]), t, cell, pos[1] );
 						if (resort !== false) { $(this).trigger("sorton", [c.sortList]); }
 					})
@@ -765,7 +784,7 @@
 						// resort using current settings
 						if (resort !== false) { $(this).trigger("sorton", [c.sortList]); }
 					})
-					.bind("sorton", function(e, list) {
+					.bind("sorton", function(e, list, init) {
 						$(this).trigger("sortStart", this);
 						// update and store the sortlist
 						c.sortList = list;
@@ -774,17 +793,18 @@
 						// set css for headers
 						setHeadersCss(this, $headers, c.sortList);
 						// sort the table and append it to the dom
-						appendToTable(this, multisort(this, c.sortList));
+						multisort(this, c.sortList);
+						appendToTable(this, init);
 					})
-					.bind("appendCache", function() {
-						appendToTable(this);
+					.bind("appendCache", function(e, init) {
+						appendToTable(this, init);
 					})
 					.bind("applyWidgetId", function(e, id) {
 						getWidgetById(id).format(this);
 					})
-					.bind("applyWidgets", function() {
+					.bind("applyWidgets", function(e, init) {
 						// apply widgets
-						applyWidget(this);
+						applyWidget(this, init);
 					})
 					.bind("destroy", function(e,c){
 						$.tablesorter.destroy(this, c);
@@ -800,8 +820,8 @@
 					applyWidget(this, true);
 					// if user has supplied a sort list to constructor.
 					if (c.sortList.length > 0) {
-						$this.trigger("sorton", [c.sortList]);
-					} else {
+						$this.trigger("sorton", [c.sortList, !c.initWidgets]);
+					} else if (c.initWidgets) {
 						// apply widget format
 						applyWidget(this);
 					}
@@ -894,8 +914,18 @@
 				"U" : "\u00da\u00d9\u00db\u00dc" // ÚÙÛÜ
 			};
 			this.replaceAccents = function(s) {
+				var a, acc = '[', eq = this.characterEquivalents;
+				if (!this.characterRegex) {
+					this.characterRegexArray = {};
+					for (a in eq) {
+						if (typeof a === 'string') {
+							acc += eq[a];
+							this.characterRegexArray[a] = new RegExp('[' + eq[a] + ']', 'g');
+						}
+					}
+					this.characterRegex = new RegExp(acc + ']');
+				}
 				if (this.characterRegex.test(s)) {
-					var a, eq = this.characterEquivalents;
 					for (a in eq) {
 						if (typeof a === 'string') {
 							s = s.replace( this.characterRegexArray[a], a );
@@ -906,13 +936,14 @@
 			};
 
 			// get sorter, string, empty, etc options for each column from
-			// metadata, header option or header class name ("sorter-false")
+			// jQuery data, metadata, header option or header class name ("sorter-false")
 			// priority = jQuery data > meta > headers option > header class name
 			this.getData = function(h, ch, key) {
-				var val = '', $h = $(h),
-					m = $.metadata ? $h.metadata() : false,
-					cl = ' ' + ($h.length ? $h.attr('class') || '' : '');
-				if ($h.length && $h.data() && ( typeof $h.data(key) !== 'undefined' || typeof $h.data(key.toLowerCase()) !== 'undefined') ){
+				var val = '', $h = $(h), m, cl;
+				if (!$h.length) { return ''; }
+				m = $.metadata ? $h.metadata() : false;
+				cl = ' ' + ($h.attr('class') || '');
+				if ($h.data() && ( typeof $h.data(key) !== 'undefined' || typeof $h.data(key.toLowerCase()) !== 'undefined') ){
 					// "data-lockedOrder" is assigned to "lockedorder"; but "data-locked-order" is assigned to "lockedOrder"
 					// "data-sort-initial-order" is assigned to "sortInitialOrder"
 					val += $h.data(key) || $h.data(key.toLowerCase());
@@ -992,7 +1023,7 @@
 	ts.addParser({
 		id: "url",
 		is: function(s) {
-			return (/^(https?|ftp|file):\/\/$/).test(s);
+			return (/^(https?|ftp|file):\/\//).test(s);
 		},
 		format: function(s) {
 			return $.trim(s.replace(/(https?|ftp|file):\/\//, ''));
@@ -1036,8 +1067,8 @@
 	ts.addParser({
 		id: "shortDate", // "mmddyyyy", "ddmmyyyy" or "yyyymmdd"
 		is: function(s) {
-			// testing for ####-####-#### - so it's not perfect
-			return (/\d{1,4}[\/\-\,\.\s+]\d{1,4}[\/\-\.\,\s+]\d{1,4}/).test(s);
+			// testing for ####-##-#### - so it's not perfect
+			return (/^(\d{2}|\d{4})[\/\-\,\.\s+]\d{2}[\/\-\.\,\s+](\d{2}|\d{4})$/).test(s);
 		},
 		format: function(s, table, cell, cellIndex) {
 			var c = table.config, ci = c.headerList[cellIndex],
@@ -1098,7 +1129,7 @@
 	ts.addWidget({
 		id: "zebra",
 		format: function(table) {
-			var $tb, $tr, $f, row, even, time, k, j, l, n,
+			var $tb, $tv, $tr, row, even, time, k, l,
 			c = table.config,
 			child = new RegExp(c.cssChildRow, 'i'),
 			b = $(table).children('tbody:not(.' + c.cssInfoBlock + ')'),
@@ -1110,24 +1141,23 @@
 				time = new Date();
 			}
 			for (k = 0; k < b.length; k++ ) {
-				row = 0;
 				// loop through the visible rows
 				$tb = $(b[k]);
 				l = $tb.children('tr').length;
 				if (l > 1) {
-					$f = $(document.createDocumentFragment());
-					$tr = $tb.children('tr').appendTo($f);
-					for (j = 0; j < l; j++) {
-						if ($tr[j].style.display !== 'none') {
-							n = $tr[j].className;
-							// style children rows the same way the parent row was styled
-							if (!child.test(n)) { row++; }
-							even = (row % 2 === 0);
-							$tr[j].className = n.replace(/\s+/g,'').replace(css[0],'').replace(css[1],'') + ' ' + css[even ? 0 : 1];
-						}
-					}
+					row = 0;
+					$tv = $tb.find('tr:visible');
+					$tb.addClass('tablesorter-hidden');
+					// revered back to using jQuery each - strangely it's the fastest method
+					$tv.each(function(){
+						$tr = $(this);
+						// style children rows the same way the parent row was styled
+						if (!child.test(this.className)) { row++; }
+						even = (row % 2 === 0);
+						$tr.removeClass(css[even ? 1 : 0]).addClass(css[even ? 0 : 1]);
+					});
+					$tb.removeClass('tablesorter-hidden');
 				}
-				$tb.append($tr);
 			}
 			if (c.debug) {
 				ts.benchmark("Applying Zebra widget", time);

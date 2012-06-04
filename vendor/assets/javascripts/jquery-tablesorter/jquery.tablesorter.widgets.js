@@ -1,8 +1,8 @@
-/*! tableSorter 2.3 widgets - updated 5/19/2012
+/*! tableSorter 2.3 widgets - updated 6/1/2012
  *
  * jQuery UI Theme
  * Column Styles
- * Column Filters (not compatible with tablesorter v2.0.5)
+ * Column Filters
  * Sticky Header
  * Column Resizing
  * Save Sort
@@ -125,7 +125,7 @@ $.tablesorter.addWidget({
 $.tablesorter.addWidget({
 	id: "columns",
 	format: function(table) {
-		var $tb, $tr, $td, $f, time, last, rmv, i, j, k, l,
+		var $tb, $tr, $td, $t, time, last, rmv, i, k, l,
 		c = table.config,
 		b = $(table).children('tbody:not(.' + c.cssInfoBlock + ')'),
 		list = c.sortList,
@@ -140,35 +140,30 @@ $.tablesorter.addWidget({
 			time = new Date();
 		}
 		// check if there is a sort (on initialization there may not be one)
-		if (list && list[0]) {
-			for (k = 0; k < b.length; k++ ) {
-				$tb = $(b[k]);
-				$f = $(document.createDocumentFragment());
-				$tr = $tb.children('tr').appendTo($f);
-				l = $tr.length;
-				// loop through the visible rows
-				for (j = 0; j < l; j++) {
-					$td = $tr.eq(j).children().removeClass(rmv);
-					// primary sort column class
-					$td.eq(list[0][0]).addClass(css[0]);
-					if (len > 1) {
-						for (i = 1; i < len; i++){
-							// secondary, tertiary, etc sort column classes
-							$td.eq(list[i][0]).addClass( css[i] || css[last] );
+		for (k = 0; k < b.length; k++ ) {
+			$tb = $(b[k]);
+			$tr = $tb.addClass('tablesorter-hidden').children('tr');
+			l = $tr.length;
+			// loop through the visible rows
+			$tr.each(function(){
+				$t = $(this);
+				if (this.style.display !== 'none') {
+					// remove all columns class names
+					$td = $t.children().removeClass(rmv);
+					// add appropriate column class names
+					if (list && list[0]) {
+						// primary sort column class
+						$td.eq(list[0][0]).addClass(css[0]);
+						if (len > 1) {
+							for (i = 1; i < len; i++){
+								// secondary, tertiary, etc sort column classes
+								$td.eq(list[i][0]).addClass( css[i] || css[last] );
+							}
 						}
 					}
 				}
-				$tb.append($tr);
-			}
-		} else {
-			// remove all column classes if sort is cleared (sortReset)
-			// $(table).find('td').removeClass(rmv); slow
-			$td = $(table).find('td');
-			len = $td.length;
-			rmv = new RegExp('(' + css.join('|') + ')');
-			for (i = 0; i < len; i++){
-				$td[i].className = $td[i].className.replace(rmv, '');
-			}
+			});
+			$tb.removeClass('tablesorter-hidden');
 		}
 		if (c.debug) {
 			$.tablesorter.benchmark("Applying Columns widget", time);
@@ -177,65 +172,192 @@ $.tablesorter.addWidget({
 });
 
 // Widget: Filter
-// "filter_startsWith" & "filter_childRows" options in "widgetOptions"
+// "filter_startsWith", "filter_childRows", "filter_ignoreCase",
+// "filter_searchDelay" & "filter_functions" options in "widgetOptions"
 // **************************
 $.tablesorter.addWidget({
 	id: "filter",
 	format: function(table) {
 		if (!$(table).hasClass('hasFilters')) {
-			var i, v, r, t, x, cr, $td, c = table.config,
-				wo = c.widgetOptions,
-				css = wo.filter_cssFilter || 'tablesorter-filter',
-				$t = $(table).addClass('hasFilters'),
-				cols = c.parsers.length,
-				fr = '<tr class="' + css + '">',
-				time;
+			var i, j, k, l, cv, v, val, r, ff, t, x, xi, cr,
+			sel, $tb, $tr, $td, reg2,
+			c = table.config,
+			wo = c.widgetOptions,
+			css = wo.filter_cssFilter || 'tablesorter-filter',
+			$t = $(table).addClass('hasFilters'),
+			b = $t.children('tbody:not(.' + c.cssInfoBlock + ')'),
+			cols = c.parsers.length,
+			fr = '<tr class="' + css + '">',
+			regexp = /^\/((?:\\\/|[^\/])+)\/([mig]{0,3})?$/,
+			reg1 = new RegExp(c.cssChildRow),
+			time, timer,
+			findRows = function(){
+				if (c.debug) { time = new Date(); }
+				v = $t.find('thead').eq(0).children('tr').find('select.' + css + ', input.' + css).map(function(){
+					return $(this).val() || '';
+				}).get();
+				cv = v.join('');
+				for (k = 0; k < b.length; k++ ) {
+					$tb = $(b[k]);
+					$tr = $tb.addClass('tablesorter-hidden').children('tr');
+					l = $tr.length;
+					// loop through the rows
+					for (j = 0; j < l; j++) {
+						// skip child rows
+						if (reg1.test($tr[j].className)) { continue; }
+						if (cv === '') {
+							$tr[j].style.display = '';
+						} else {
+							r = true;
+							cr = $tr.eq(j).nextUntil('tr:not(.' + c.cssChildRow + ')');
+							// so, if "table.config.widgetOptions.filter_childRows" is true and there is
+							// a match anywhere in the child row, then it will make the row visible
+							// checked here so the option can be changed dynamically
+							t = (cr.length && (wo && wo.hasOwnProperty('filter_childRows') &&
+								typeof wo.filter_childRows !== 'undefined' ? wo.filter_childRows : true)) ? cr.text() : '';
+							$td = $tr.eq(j).children('td');
+							for (i = 0; i < cols; i++) {
+								x = $.trim($td.eq(i).text());
+								xi = wo.filter_ignoreCase ? x.toLocaleLowerCase() : x;
+								// ignore if filter is empty
+								if (v[i] !== '') {
+									ff = r; // if r is true, show that row
+									// val = case insensitive, v[i] = case sensitive
+									val = wo.filter_ignoreCase ? v[i].toLocaleLowerCase() : v[i];
+									if (wo.filter_functions && wo.filter_functions[i]) {
+										if (wo.filter_functions[i] === true) {
+											// default selector; no "filter-select" class
+											ff = wo.filter_ignoreCase ? val === xi : v[i] === x;
+										} else if (typeof wo.filter_functions[i] === 'function') {
+											// filter callback( exact cell content, parser normalized content, filter input value, column index )
+											ff = wo.filter_functions[i](x, c.cache[k].normalized[j][i], v[i], i);
+										} else if (typeof wo.filter_functions[i][v[i]] === 'function'){
+											// selector option function
+											ff = wo.filter_functions[i][v[i]](x, c.cache[k].normalized[j][i], v[i], i);
+										}
+									// Look for regex
+									} else if (regexp.test(val)) {
+										reg2 = regexp.exec(val);
+										ff = new RegExp(reg2[1], reg2[2]).test(xi);
+									// Look for quotes to get an exact match
+									} else if (/[\"|\']$/.test(val) && xi === val.replace(/(\"|\')/g,'')) {
+										r = (r) ? true : false;
+									// Look for wild card: ? = single, or * = multiple
+									} else if (/[\?|\*]/.test(val)) {
+										ff = new RegExp( val.replace(/\?/g, '\\S{1}').replace(/\*/g, '\\S*') ).test(xi);
+									// Look for match, and add child row data for matching
+									} else {
+										x = (xi + t).indexOf(val);
+										if ( (!wo.filter_startsWith && x >= 0) || (wo.filter_startsWith && x === 0) ) {
+											r = (r) ? true : false;
+										} else {
+											r = false;
+										}
+									}
+									r = (ff) ? (r ? true : false) : false;
+								}
+							}
+							$tr[j].style.display = (r ? '' : 'none');
+							if (cr.length) { cr[r ? 'show' : 'hide'](); }
+						}
+					}
+					$tb.removeClass('tablesorter-hidden');
+				}
+				if (c.debug) {
+					$.tablesorter.benchmark("Completed filter widget search", time);
+				}
+				$t.trigger('applyWidgets'); // make sure zebra widget is applied
+			},
+			buildSelect = function(i){
+				var o, arry = [];
+				i = parseInt(i, 10);
+				o = '<option value="">' + ($(c.headerList[i]).attr('data-placeholder') || '') + '</option>';
+				for (k = 0; k < b.length; k++ ) {
+					l = c.cache[k].row.length;
+					// loop through the rows
+					for (j = 0; j < l; j++) {
+						// get non-normalized cell content
+						t = c.cache[k].row[j][0].cells[i];
+						arry.push( c.supportsTextContent ? t.textContent : $(t).text() );
+					}
+				}
+				// get unique elements and sort the list
+				arry = arry.getUnique(true);
+				// build option list
+				for (k = 0; k < arry.length; k++) {
+					o += '<option value="' + arry[k] + '">' + arry[k] + '</option>';
+				}
+				$t.find('thead').find('select.' + css + '[data-col="' + i + '"]').append(o);
+			};
 			if (c.debug) {
 				time = new Date();
 			}
 			for (i=0; i < cols; i++){
-				fr += '<td><input type="search" data-col="' + i + '" class="' + css;
+				sel = (wo.filter_functions && wo.filter_functions[i] && typeof wo.filter_functions[i] !== 'function') || $(c.headerList[i]).hasClass('filter-select');
+				fr += '<td>';
+				if (sel){
+					fr += '<select data-col="' + i + '" class="' + css;
+				} else {
+					fr += '<input type="search" placeholder="' + ($(c.headerList[i]).attr('data-placeholder') || "") + '" data-col="' + i + '" class="' + css;
+				}
 				// use header option - headers: { 1: { filter: false } } OR add class="filter-false"
 				if ($.tablesorter.getData) {
 					// get data from jQuery data, metadata, headers option or header class name
 					fr += $.tablesorter.getData(c.headerList[i], c.headers[i], 'filter') === 'false' ? ' disabled" disabled' : '"';
 				} else {
 					// only class names and header options - keep this for compatibility with tablesorter v2.0.5
-					fr += ((c.headers[i] && c.headers[i].hasOwnProperty('filter') && c.headers[i].filter === false) || $(c.headerList[i]).is('.filter-false') ) ? ' disabled" disabled' : '"';
+					fr += ((c.headers[i] && c.headers[i].hasOwnProperty('filter') && c.headers[i].filter === false) || $(c.headerList[i]).hasClass('filter-false') ) ? ' disabled" disabled' : '"';
 				}
-				fr += '></td>';
+				fr += (sel ? '></select>' : '>') + '</td>';
 			}
 			$t
-				.find('thead').eq(0).append(fr += '</tr>')
-				.find('input.' + css).bind('keyup search', function(e){
-					v = $t.find('thead').eq(0).children('tr').find('input.' + css).map(function(){ return ($(this).val() || '').toLowerCase(); }).get();
-					if (v.join('') === '') {
-						$t.find('tr').show();
-					} else {
-						// *** to do *** optimize this to work better with very large tables
-						$t.children('tbody:not(.' + c.cssInfoBlock + ')').children('tr:not(.' + c.cssChildRow + ')').each(function(){
-							r = true;
-							cr = $(this).nextUntil('tr:not(.' + c.cssChildRow + ')');
-							// so, if "table.config.widgetOptions.filter_childRows" is true and there is
-							// a match anywhere in the child row, then it will make the row visible
-							// checked here so the option can be changed dynamically
-							t = (cr.length && (wo && wo.hasOwnProperty('filter_childRows') &&
-								typeof wo.filter_childRows !== 'undefined' ? wo.filter_childRows : true)) ? cr.text() : '';
-							$td = $(this).children('td');
-							for (i=0; i < cols; i++){
-								x = $.trim(($td.eq(i).text() + t)).toLowerCase().indexOf(v[i]);
-								if (v[i] !== '' && ( (!wo.filter_startsWith && x >= 0) || (wo.filter_startsWith && x === 0) ) ) {
-									r = (r) ? true : false;
-								} else if (v[i] !== '') {
-									r = false;
-								}
+			.find('thead').eq(0).append(fr += '</tr>')
+			.find('input.' + css).bind('keyup search', function(e, delay){
+				// ignore arrow and meta keys; allow backspace
+				if ((e.which < 32 && e.which !== 8) || (e.which >= 37 && e.which <=40)) { return; }
+				// skip delay
+				if (delay === false) {
+					findRows();
+					return;
+				}
+				// delay filtering
+				clearTimeout(timer);
+				timer = setTimeout(function(){
+					findRows();
+				}, wo.filter_searchDelay || 300);
+			});
+			if (wo.filter_functions) {
+				// i = column # (string)
+				for (i in wo.filter_functions) {
+					t = $(c.headerList[i]);
+					fr = '';
+					if (typeof i === 'string' && wo.filter_functions[i] === true && !t.hasClass('filter-false')) {
+						buildSelect(i);
+					} else if (typeof i === 'string' && !t.hasClass('filter-false')) {
+						// add custom drop down list
+						for (j in wo.filter_functions[i]) {
+							if (typeof j === 'string') {
+								fr += fr === '' ? '<option>' + (t.attr('data-placeholder') || '') + '</option>' : '';
+								fr += '<option>' + j + '</option>';
 							}
-							$(this)[r ? 'show' : 'hide']();
-							if (cr.length) { cr[r ? 'show' : 'hide'](); }
-						});
+						}
+						$t.find('thead').find('select.' + css + '[data-col="' + i + '"]').append(fr);
 					}
-					$t.trigger('applyWidgets'); // make sure zebra widget is applied
-				});
+				}
+			}
+			// build default select dropdown
+			for (i = 0; i < c.headerList.length; i++) {
+				t = $(c.headerList[i]);
+				// look for the filter-select class, but don't build it twice.
+				if (t.hasClass('filter-select') && !t.hasClass('filter-false') && !(wo.filter_functions && wo.filter_functions[i] === true)){
+					buildSelect(i);
+				}
+			}
+
+			$t.find('select.' + css).bind('change', function(){
+				findRows();
+			});
+
 			if (c.debug) {
 				$.tablesorter.benchmark("Applying Filter widget", time);
 			}
@@ -286,11 +408,11 @@ $.tablesorter.addWidget({
 		});
 		// set sticky header cell width and link clicks to real header
 		hdrCells.each(function(i){
-			var t = $(this),
-			s = stkyCells.eq(i)
+			var t = $(this);
+			stkyCells.eq(i)
 			// clicking on sticky will trigger sort
-			.bind('click', function(e){
-				t.trigger(e);
+			.bind('mouseup', function(e){
+				t.trigger(e, true); // external mouseup flag (click timer is ignored)
 			})
 			// prevent sticky header text selection
 			.bind('mousedown', function(){
@@ -343,12 +465,11 @@ $.tablesorter.addWidget({
 	format: function(table) {
 		if ($(table).hasClass('hasResizable')) { return; }
 		$(table).addClass('hasResizable');
-		var i, j, w, s, c = table.config,
+		var j, s, c = table.config,
 			$cols = $(c.headerList).filter(':gt(0)'),
 			position = 0,
 			$target = null,
 			$prev = null,
-			len = $cols.length,
 			stopResize = function(){
 				position = 0;
 				$target = $prev = null;
@@ -372,8 +493,7 @@ $.tablesorter.addWidget({
 			.bind('mousemove', function(e){
 				// ignore mousemove if no mousedown
 				if (position === 0 || !$target) { return; }
-				var w = e.pageX - position,
-					n = $prev;
+				var w = e.pageX - position;
 				// make sure
 				if ( $target.width() < -w || ( $prev && $prev.width() <= w )) { return; }
 				// resize current column
@@ -394,6 +514,7 @@ $.tablesorter.addWidget({
 				$target = $(e.target).closest('th');
 				$prev = $target.prev();
 				position = e.pageX;
+				return false;
 			});
 		$(table).find('thead').bind('mouseup mouseleave', function(){
 			stopResize();
@@ -412,7 +533,7 @@ $.tablesorter.addWidget({
 		thisWidget.format(table, true);
 	},
 	format: function(table, init) {
-		var n, d, k, sl, time, c = table.config, sortList = { "sortList" : c.sortList };
+		var sl, time, c = table.config, sortList = { "sortList" : c.sortList };
 		if (c.debug) {
 			time = new Date();
 		}
@@ -448,3 +569,16 @@ $.tablesorter.addWidget({
 });
 
 })(jQuery);
+
+// return an array with unique values https://gist.github.com/461516
+Array.prototype.getUnique = function(s){
+	var c, a = [], o = {}, i, j = 0, l = this.length;
+	for(i=0; i < l; ++i) {
+		c = this[i];
+		if (!o[c]) {
+			o[c] = {};
+			a[j++] = c;
+		}
+	}
+	return (s) ? a.sort() : a;
+};
