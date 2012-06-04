@@ -1,6 +1,10 @@
 Changelog
 ===
 
+#### V1.0.1
+
+* Upgrade tablesorter to V2.3.7
+
 #### V1.0.0
 
 * BIG CHANGE: Use [Mottie's fork of tablesorter], V2.3.4
