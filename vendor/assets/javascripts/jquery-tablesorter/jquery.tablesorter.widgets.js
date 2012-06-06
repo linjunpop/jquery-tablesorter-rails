@@ -1,4 +1,4 @@
-/*! tableSorter 2.3 widgets - updated 6/1/2012
+/*! tableSorter 2.3 widgets - updated 6/5/2012
  *
  * jQuery UI Theme
  * Column Styles
@@ -238,7 +238,11 @@ $.tablesorter.addWidget({
 									// Look for regex
 									} else if (regexp.test(val)) {
 										reg2 = regexp.exec(val);
-										ff = new RegExp(reg2[1], reg2[2]).test(xi);
+										try {
+											ff = new RegExp(reg2[1], reg2[2]).test(xi);
+										} catch (err) {
+											ff = false;
+										}
 									// Look for quotes to get an exact match
 									} else if (/[\"|\']$/.test(val) && xi === val.replace(/(\"|\')/g,'')) {
 										r = (r) ? true : false;
@@ -311,6 +315,9 @@ $.tablesorter.addWidget({
 				fr += (sel ? '></select>' : '>') + '</td>';
 			}
 			$t
+			.bind('addRows updateCell update appendCache', function(){
+				findRows();
+			})
 			.find('thead').eq(0).append(fr += '</tr>')
 			.find('input.' + css).bind('keyup search', function(e, delay){
 				// ignore arrow and meta keys; allow backspace
