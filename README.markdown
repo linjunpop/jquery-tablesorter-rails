@@ -11,8 +11,7 @@ Any issue associate with the js/css files, please report to [Mottie's fork].
 NOTICE:
 ---
 
-v0.0.5 users, from v1.0.0, the tablesorter's version will change
-to [Mottie's fork] :smile:.
+v0.0.5 users, from v1.0.0, this gem will use [Mottie's fork] :smile:.
 
 Install
 ---
@@ -36,28 +35,31 @@ Usage
 require jquery-tablesorter
 ```
 
-this will require `jquery.metadata`, `jquery.tablesorter`,
-`jquery.tablesorter.widgets`
+this will require all files.
 
 Or you can include single file with:
 
 ```
-require jquery-tablesorter/jquery.metadata
-require jquery-tablesorter/jquery.tablesorter
-require jquery-tablesorter/jquery.tablesorter.widgets
+//= require jquery-tablesorter/jquery.metadata
+//= require jquery-tablesorter/jquery.tablesorter
+//= require jquery-tablesorter/jquery.tablesorter.widgets
+//= require jquery-tablesorter/addons/jquery.tablesorter.pager
 ```
 
 
 ### In your `application.css`
 
 ```
-require jquery-tablesorter/<theme name>
+/*
+ * = require jquery-tablesorter/<theme name>
+ */
 ```
 
 Avaliable theme names:
 
 * blue
 * ui
+
 
 ### In CoffeeScript file:
 

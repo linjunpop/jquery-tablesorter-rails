@@ -1,6 +1,10 @@
 Changelog
 ===
 
+#### NEXT
+
+* Fixes #3 pager is gone after upgrade to [Mottie's fork of tablesorter]
+
 #### V1.0.2
 
 * Upgrade tablesorter to V2.3.8
