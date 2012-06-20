@@ -24,5 +24,16 @@ namespace :jquery_tablesorter do
       'vendor/assets/stylesheets/jquery-tablesorter/ui',
       :verbose => true
 
+    # addons
+    FileUtils.cp 'tablesorter/addons/pager/jquery.tablesorter.pager.css',
+      'vendor/assets/stylesheets/jquery-tablesorter/addons/',
+      :verbose => true
+    FileUtils.cp 'tablesorter/addons/pager/jquery.tablesorter.pager.js',
+      'vendor/assets/javascripts/jquery-tablesorter/addons/',
+      :verbose => true
+    FileUtils.cp_r 'tablesorter/addons/pager/icons',
+      'vendor/assets/images/jquery-tablesorter/addons/icons',
+      :verbose => true
+
   end
 end
