@@ -32,7 +32,7 @@ namespace :jquery_tablesorter do
       'vendor/assets/javascripts/jquery-tablesorter/addons/',
       :verbose => true
     FileUtils.cp_r 'tablesorter/addons/pager/icons',
-      'vendor/assets/images/jquery-tablesorter/addons/icons',
+      'vendor/assets/images/jquery-tablesorter/addons',
       :verbose => true
 
   end
