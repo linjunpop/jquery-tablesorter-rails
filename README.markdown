@@ -1,5 +1,4 @@
-jQuery Table Sorter plugin for Rails
-===
+# jQuery Table Sorter plugin for Rails
 
 Simple integration of jquery-tablesorter into the asset pipeline.
 
@@ -8,26 +7,29 @@ Current tablesorter version: 2.4.6 (10/25/2012), [documentation]
 Any issue associate with the js/css files, please report to [Mottie's fork].
 
 
-NOTICE:
----
+## NOTICE:
 
 v0.0.5 users, from v1.0.0, this gem will use [Mottie's fork] :smile:.
 
-Install
----
-In your Gemfile
+## Installation
 
-```ruby
-gem 'jquery-tablesorter'
-```
+Add this line to your application's Gemfile:
 
-Requirements
----
+    gem 'jquery-tablesorter'
+
+And then execute:
+
+    $ bundle
+
+Or install it yourself as:
+
+    $ gem install jquery-tablesorter
+
+## Requirements
 
 Rails 3.1 and higher
 
-Usage
----
+## Usage
 
 ### JavaScript files
 
@@ -78,6 +80,14 @@ pager theme:
  *= require jquery-tablesorter/addons/pager/jquery.tablesorter.pager
  */
 ```
+
+## Contributing
+
+1. Fork it
+2. Create your feature branch (`git checkout -b my-new-feature`)
+3. Commit your changes (`git commit -am 'Added some feature'`)
+4. Push to the branch (`git push origin my-new-feature`)
+5. Create new Pull Request
 
 [Mottie's fork]: https://github.com/Mottie/tablesorter
 [documentation]: http://mottie.github.com/tablesorter/docs/index.html
