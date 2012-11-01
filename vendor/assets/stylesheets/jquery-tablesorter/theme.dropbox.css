@@ -52,16 +52,16 @@
 	content: "";
 }
 .tablesorter-dropbox th.tablesorter-headerSortUp i {
-	background-image: url(images/dropbox-asc1.png);
+	background-image: url(/images/jquery-tablesorter/dropbox-asc1.png);
 }
 .tablesorter-dropbox th.tablesorter-headerSortUp i {
-	background-image: url(images/dropbox-asc2.png);
+	background-image: url(/images/jquery-tablesorter/dropbox-asc2.png);
 }
 .tablesorter-dropbox th.tablesorter-headerSortDown i {
-	background-image: url(images/dropbox-desc1.png);
+	background-image: url(/images/jquery-tablesorter/dropbox-desc1.png);
 }
 .tablesorter-dropbox th.tablesorter-headerSortDown i {
-	background-image: url(images/dropbox-desc2.png);
+	background-image: url(/images/jquery-tablesorter/dropbox-desc2.png);
 }
 
 /* tbody */
