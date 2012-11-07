@@ -39,7 +39,7 @@ In your `application.js`
 //= require jquery-tablesorter
 ```
 
-this will require all files.
+This will require all jquery-tablesorter files (exclude addons).
 
 Or you can include single file with:
 
