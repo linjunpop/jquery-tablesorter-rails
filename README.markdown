@@ -6,11 +6,6 @@ Current tablesorter version: 2.4.6 (10/25/2012), [documentation]
 
 Any issue associate with the js/css files, please report to [Mottie's fork].
 
-
-## NOTICE:
-
-v0.0.5 users, from v1.0.0, this gem will use [Mottie's fork] :smile:.
-
 ## Installation
 
 Add this line to your application's Gemfile:
