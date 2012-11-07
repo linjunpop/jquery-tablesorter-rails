@@ -20,7 +20,7 @@
 /* header */
 .tablesorter-green thead tr,
 .tablesorter-green tfoot tr {
-	background: url(/images/jquery-tablesorter/green-header.png) center center repeat-x;
+	background: url(/assets/jquery-tablesorter/green-header.png) center center repeat-x;
 }
 .tablesorter-green th,
 .tablesorter-green thead td {
@@ -30,18 +30,18 @@
 }
 .tablesorter-green .header,
 .tablesorter-green .tablesorter-header {
-	background: url(/images/jquery-tablesorter/green-unsorted.png) no-repeat 5px center;
+	background: url(/assets/jquery-tablesorter/green-unsorted.png) no-repeat 5px center;
 	border-collapse: collapse;
 	white-space: normal;
 	cursor: pointer;
 }
 .tablesorter-green thead .headerSortUp,
 .tablesorter-green thead .tablesorter-headerSortUp {
-	background-image: url(/images/jquery-tablesorter/green-asc.png);
+	background-image: url(/assets/jquery-tablesorter/green-asc.png);
 }
 .tablesorter-green thead .headerSortDown,
 .tablesorter-green thead .tablesorter-headerSortDown {
-	background-image: url(/images/jquery-tablesorter/green-desc.png);
+	background-image: url(/assets/jquery-tablesorter/green-desc.png);
 }
 .tablesorter-green th.tablesorter-header .tablesorter-header-inner,
 .tablesorter-green td.tablesorter-header .tablesorter-header-inner {

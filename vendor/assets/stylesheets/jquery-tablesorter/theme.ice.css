@@ -35,7 +35,7 @@
 }
 .tablesorter-ice .header,
 .tablesorter-ice .tablesorter-header {
-	background: #f6f8f9 url(/images/jquery-tablesorter/ice-unsorted.gif) no-repeat center right;
+	background: #f6f8f9 url(/assets/jquery-tablesorter/ice-unsorted.gif) no-repeat center right;
 	padding: 4px 18px 4px 4px;
 	white-space: normal;
 	cursor: pointer;
@@ -43,12 +43,12 @@
 .tablesorter-ice th.headerSortUp,
 .tablesorter-ice th.tablesorter-headerSortUp {
 	color: #333;
-	background: #ebedee url(/images/jquery-tablesorter/ice-desc.gif) no-repeat center right;
+	background: #ebedee url(/assets/jquery-tablesorter/ice-desc.gif) no-repeat center right;
 }
 .tablesorter-ice th.headerSortDown,
 .tablesorter-ice th.tablesorter-headerSortDown {
 	color: #333;
-	background: #ebedee url(/images/jquery-tablesorter/ice-asc.gif) no-repeat center right;
+	background: #ebedee url(/assets/jquery-tablesorter/ice-asc.gif) no-repeat center right;
 }
 
 /* tfoot */

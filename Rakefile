@@ -54,7 +54,7 @@ namespace :jquery_tablesorter do
   desc 'Sanitize image paths'
   task :sanitize_image_paths do
     Dir.glob('vendor/assets/stylesheets/jquery-tablesorter/*.css').each do |file_path|
-      content = File.read(file_path).gsub(/url\(images\//, "url(/images/jquery-tablesorter/")
+      content = File.read(file_path).gsub(/url\(images\//, "url(/assets/jquery-tablesorter/")
       File.open(file_path, "w") {|file| file.write content}
     end
   end
