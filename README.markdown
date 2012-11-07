@@ -1,71 +1,93 @@
-jQuery Table Sorter plugin for Rails
-===
+# jQuery Table Sorter plugin for Rails
 
 Simple integration of jquery-tablesorter into the asset pipeline.
 
-Current version: 2.3.11(7/12/2012), [documentation]
+Current tablesorter version: 2.4.6 (10/25/2012), [documentation]
 
 Any issue associate with the js/css files, please report to [Mottie's fork].
 
 
-NOTICE:
----
+## NOTICE:
 
 v0.0.5 users, from v1.0.0, this gem will use [Mottie's fork] :smile:.
 
-Install
----
-In your Gemfile
+## Installation
 
-```
-gem 'jquery-tablesorter'
-```
+Add this line to your application's Gemfile:
 
-Requirements
----
+    gem 'jquery-tablesorter'
+
+And then execute:
+
+    $ bundle
+
+Or install it yourself as:
+
+    $ gem install jquery-tablesorter
+
+## Requirements
 
 Rails 3.1 and higher
 
-Usage
----
+## Usage
 
-### In your `application.js`
+### JavaScript files
 
+In your `application.js`
+
+```javascript
+//= require jquery-tablesorter
 ```
-require jquery-tablesorter
-```
 
-this will require all files.
+This will require all jquery-tablesorter files (exclude addons).
 
 Or you can include single file with:
 
-```
+```javascript
 //= require jquery-tablesorter/jquery.metadata
 //= require jquery-tablesorter/jquery.tablesorter
 //= require jquery-tablesorter/jquery.tablesorter.widgets
-//= require jquery-tablesorter/addons/jquery.tablesorter.pager
+//= require jquery-tablesorter/addons/pager/jquery.tablesorter.pager
 ```
 
+### Stylesheet files
 
-### In your `application.css`
+In your `application.css`
 
-```
+```css
 /*
- * = require jquery-tablesorter/<theme name>
+ *= require jquery-tablesorter/<theme name>
  */
 ```
 
 Avaliable theme names:
 
-* blue
-* ui
+* theme.black-ice
+* theme.blue
+* theme.bootstrap
+* theme.dark
+* theme.default
+* theme.dropbox
+* theme.green
+* theme.grey
+* theme.ice
+* theme.jui
 
+pager theme:
 
-### In CoffeeScript file:
-
+```css
+/*
+ *= require jquery-tablesorter/addons/pager/jquery.tablesorter.pager
+ */
 ```
-$('table.tablesorter').tablesorter()
-```
+
+## Contributing
+
+1. Fork it
+2. Create your feature branch (`git checkout -b my-new-feature`)
+3. Commit your changes (`git commit -am 'Added some feature'`)
+4. Push to the branch (`git push origin my-new-feature`)
+5. Create new Pull Request
 
 [Mottie's fork]: https://github.com/Mottie/tablesorter
 [documentation]: http://mottie.github.com/tablesorter/docs/index.html
