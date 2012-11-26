@@ -1,5 +1,7 @@
 # jQuery Table Sorter plugin for Rails
 
+[![Still Maintained](http://stillmaintained.com/linjunpop/jquery-tablesorter-rails.png)](http://stillmaintained.com/linjunpop/jquery-tablesorter-rails)
+
 Simple integration of jquery-tablesorter into the asset pipeline.
 
 Current tablesorter version: 2.4.6 (10/25/2012), [documentation]
