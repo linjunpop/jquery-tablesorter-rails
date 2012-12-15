@@ -40,7 +40,7 @@
 	/* white (unsorted) double arrow */
 	/* background-image: url(data:image/gif;base64,R0lGODlhFQAJAIAAAP///////yH5BAEAAAEALAAAAAAVAAkAAAIXjI+AywnaYnhUMoqt3gZXPmVg94yJVQAAOw==); */
 	/* image */
-	/* background-image: url(/assets/jquery-tablesorter/black-unsorted.gif); */
+	/* background-image: url(images/black-unsorted.gif); */
 	background-repeat: no-repeat;
 	background-position: center right;
 	padding: 4px 18px 4px 4px;
@@ -48,29 +48,33 @@
 	cursor: pointer;
 }
 .tablesorter-blue .headerSortUp,
-.tablesorter-blue .tablesorter-headerSortUp {
+.tablesorter-blue .tablesorter-headerSortUp,
+.tablesorter-blue .tablesorter-headerAsc {
 	background-color: #9fbfdf;
 	/* black asc arrow */
-	background-image: url(data:image/gif;base64,R0lGODlhFQAEAIAAACMtMP///yH5BAEAAAEALAAAAAAVAAQAAAINjB+gC+jP2ptn0WskLQA7);
-	/* white asc arrow */
-	/* background-image: url(data:image/gif;base64,R0lGODlhFQAEAIAAAP///////yH5BAEAAAEALAAAAAAVAAQAAAINjB+gC+jP2ptn0WskLQA7); */
-	/* image */
-	/* background-image: url(/assets/jquery-tablesorter/black-asc.gif); */
-}
-.tablesorter-blue .headerSortDown,
-.tablesorter-blue .tablesorter-headerSortDown {
-	background-color: #8cb3d9;
-	/* black desc arrow */
 	background-image: url(data:image/gif;base64,R0lGODlhFQAEAIAAACMtMP///yH5BAEAAAEALAAAAAAVAAQAAAINjI8Bya2wnINUMopZAQA7);
-	/* white desc arrow */
+	/* white asc arrow */
 	/* background-image: url(data:image/gif;base64,R0lGODlhFQAEAIAAAP///////yH5BAEAAAEALAAAAAAVAAQAAAINjI8Bya2wnINUMopZAQA7); */
 	/* image */
-	/* background-image: url(/assets/jquery-tablesorter/black-desc.gif); */
+	/* background-image: url(images/black-asc.gif); */
+}
+.tablesorter-blue .headerSortDown,
+.tablesorter-blue .tablesorter-headerSortDown,
+.tablesorter-blue .tablesorter-headerDesc {
+	background-color: #8cb3d9;
+	/* black desc arrow */
+	background-image: url(data:image/gif;base64,R0lGODlhFQAEAIAAACMtMP///yH5BAEAAAEALAAAAAAVAAQAAAINjB+gC+jP2ptn0WskLQA7);
+	/* white desc arrow */
+	/* background-image: url(data:image/gif;base64,R0lGODlhFQAEAIAAAP///////yH5BAEAAAEALAAAAAAVAAQAAAINjB+gC+jP2ptn0WskLQA7); */
+	/* image */
+	/* background-image: url(images/black-desc.gif); */
 }
 
 /* tfoot */
 .tablesorter-blue tfoot .tablesorter-headerSortUp,
-.tablesorter-blue tfoot .tablesorter-headerSortDown {
+.tablesorter-blue tfoot .tablesorter-headerSortDown,
+.tablesorter-blue tfoot .tablesorter-headerAsc,
+.tablesorter-blue tfoot .tablesorter-headerDesc {
 	/* remove sort arrows from footer */
 	background-image: url();
 }
