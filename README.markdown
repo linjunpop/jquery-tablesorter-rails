@@ -86,6 +86,14 @@ pager theme:
 4. Push to the branch (`git push origin my-new-feature`)
 5. Create new Pull Request
 
+### Update js and css files
+
+1. Update `tablesorter` submodule
+2. Run `rake jquery_tablesorter:update`
+3. Run `rake jquery_tablesorter:sanitize_image_paths`
+4. Update `README.md` and `CHANGELOG.md`
+      
+
 [Mottie's fork]: https://github.com/Mottie/tablesorter
 [documentation]: http://mottie.github.com/tablesorter/docs/index.html
 
