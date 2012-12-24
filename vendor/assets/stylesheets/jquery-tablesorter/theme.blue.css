@@ -40,7 +40,7 @@
 	/* white (unsorted) double arrow */
 	/* background-image: url(data:image/gif;base64,R0lGODlhFQAJAIAAAP///////yH5BAEAAAEALAAAAAAVAAkAAAIXjI+AywnaYnhUMoqt3gZXPmVg94yJVQAAOw==); */
 	/* image */
-	/* background-image: url(images/black-unsorted.gif); */
+	/* background-image: url(/assets/jquery-tablesorter/black-unsorted.gif); */
 	background-repeat: no-repeat;
 	background-position: center right;
 	padding: 4px 18px 4px 4px;
@@ -56,7 +56,7 @@
 	/* white asc arrow */
 	/* background-image: url(data:image/gif;base64,R0lGODlhFQAEAIAAAP///////yH5BAEAAAEALAAAAAAVAAQAAAINjI8Bya2wnINUMopZAQA7); */
 	/* image */
-	/* background-image: url(images/black-asc.gif); */
+	/* background-image: url(/assets/jquery-tablesorter/black-asc.gif); */
 }
 .tablesorter-blue .headerSortDown,
 .tablesorter-blue .tablesorter-headerSortDown,
@@ -67,7 +67,11 @@
 	/* white desc arrow */
 	/* background-image: url(data:image/gif;base64,R0lGODlhFQAEAIAAAP///////yH5BAEAAAEALAAAAAAVAAQAAAINjB+gC+jP2ptn0WskLQA7); */
 	/* image */
-	/* background-image: url(images/black-desc.gif); */
+	/* background-image: url(/assets/jquery-tablesorter/black-desc.gif); */
+}
+.tablesorter-blue thead .sorter-false {
+	background-image: url();
+	padding: 4px;
 }
 
 /* tfoot */

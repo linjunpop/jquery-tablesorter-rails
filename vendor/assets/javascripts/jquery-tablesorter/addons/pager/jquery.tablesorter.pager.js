@@ -1,20 +1,23 @@
 /*!
  * tablesorter pager plugin
- * updated 11/27/2012
+ * updated 12/20/2012
  */
 /*jshint browser:true, jquery:true, unused:false */
 ;(function($) {
 	"use strict";
-	$.extend({tablesorterPager: new function() {
+	/*jshint supernew:true */
+	$.extend({ tablesorterPager: new function() {
 
 		this.defaults = {
 			// target the pager markup
 			container: null,
 
-			// use this format: "http://mydatabase.com?page={page}&size={size}&{sortList:col}"
-			// where {page} is replaced by the page number and {size} is replaced by the number of records to show
-			// {sortList:col} adds the sortList to the url into a "col" array.
+			// use this format: "http://mydatabase.com?page={page}&size={size}&{sortList:col}&{filterList:fcol}"
+			// where {page} is replaced by the page number, {size} is replaced by the number of records to show,
+			// {sortList:col} adds the sortList to the url into a "col" array, and {filterList:fcol} adds
+			// the filterList to the url into an "fcol" array.
 			// So a sortList = [[2,0],[3,0]] becomes "&col[2]=0&col[3]=0" in the url
+			// and a filterList = [[2,Blue],[3,13]] becomes "&fcol[2]=Blue&fcol[3]=13" in the url
 			ajaxUrl: null,
 
 			// process ajax so that the following information is returned:
@@ -61,6 +64,7 @@
 			cssGoto: '.gotoPage', // go to page selector - select dropdown that sets the current page
 			cssPageDisplay: '.pagedisplay', // location of where the "output" is displayed
 			cssPageSize: '.pagesize', // page size selector - select dropdown that sets the "size" option
+			cssErrorRow: 'tablesorter-errorRow', // error information row
 
 			// class added to arrows when at the extremes (i.e. prev/first arrows are "disabled" when on the first page)
 			cssDisabled: 'disabled', // Note there is no period "." in front of this class name
@@ -81,7 +85,6 @@
 			r = 'removeClass',
 			d = c.cssDisabled,
 			dis = !!disable,
-			// tr = Math.min( c.totalRows, c.filteredRows ),
 			tp = Math.min( c.totalPages, c.filteredPages );
 			if ( c.updateArrows ) {
 				$(c.cssFirst + ',' + c.cssPrev, c.container)[ ( dis || c.page === 0 ) ? a : r ](d);
@@ -90,7 +93,7 @@
 		},
 
 		updatePageDisplay = function(table, c) {
-			var i, p, s, t, out, f = $(table).hasClass('hasFilters');
+			var i, p, s, t, out, f = $(table).hasClass('hasFilters') && !c.ajaxUrl;
 			c.filteredRows = (f) ? $(table).find('tbody tr:not(.filtered)').length : c.totalRows;
 			c.filteredPages = (f) ? Math.ceil( c.filteredRows / c.size ) : c.totalPages;
 			if ( Math.min( c.totalPages, c.filteredPages ) > 0 ) {
@@ -134,7 +137,7 @@
 				h = $.data(table, 'pagerSavedHeight');
 				if (h) {
 					d = h - $b.height();
-					if ( d > 5 && $.data(table, 'pagerLastSize') === c.size && $b.find('tr:visible').length < c.size ) {
+					if ( d > 5 && $.data(table, 'pagerLastSize') === c.size && $b.children('tr:visible').length < c.size ) {
 						$b.append('<tr class="pagerSavedHeightSpacer remove-me" style="height:' + d + 'px;"></tr>');
 					}
 				}
@@ -152,7 +155,7 @@
 		hideRows = function(table, c){
 			if (!c.ajaxUrl) {
 				var i,
-				rows = $('tr:not(.' + table.config.cssChildRow + ')', table.tBodies),
+				rows = $(table.tBodies).children('tr:not(.' + table.config.cssChildRow + ')'),
 				l = rows.length,
 				s = ( c.page * c.size ),
 				e =  s + c.size,
@@ -187,7 +190,7 @@
 				tc = table.config,
 				$b = $(table.tBodies).filter(':not(.' + tc.cssInfoBlock + ')'),
 				hl = $t.find('thead th').length, tds = '',
-				err = '<tr class="' + tc.selectorRemove + '"><td style="text-align: center;" colspan="' + hl + '">' +
+				err = '<tr class="' + c.cssErrorRow + ' ' + tc.selectorRemove + '"><td style="text-align: center;" colspan="' + hl + '">' +
 					(exception ? exception.message + ' (' + exception.name + ')' : 'No rows found') + '</td></tr>',
 				result = c.ajaxProcessing(data) || [ 0, [] ],
 				d = result[1] || [],
@@ -225,13 +228,17 @@
 						$f.eq(j).html( th[j] );
 					});
 				}
+				
+				$t.find('thead tr.' + c.cssErrorRow).remove(); // Clean up any previous error.
 				if ( exception ) {
 					// add error row to thead instead of tbody, or clicking on the header will result in a parser error
 					$t.find('thead').append(err);
 				} else {
 					$b.html( tds ); // add tbody
 				}
-				$.tablesorter.isProcessing(table); // remove loading icon
+				if (tc.showProcessing) {
+					$.tablesorter.isProcessing(table); // remove loading icon
+				}
 				$t.trigger('update');
 				c.totalRows = result[0] || 0;
 				c.totalPages = Math.ceil( c.totalRows / c.size );
@@ -246,28 +253,52 @@
 		},
 
 		getAjax = function(table, c){
-			var url = (c.ajaxUrl) ? c.ajaxUrl.replace(/\{page\}/g, c.page).replace(/\{size\}/g, c.size) : '',
-			arry = [],
-			sl = table.config.sortList,
-			col = url.match(/\{sortList[\s+]?:[\s+]?(.*)\}/);
-			if (col) {
-				col = col[1];
-				$.each(sl, function(i,v){
-					arry.push(col + '[' + v[0] + ']=' + v[1]);
-				});
-				// if the arry is empty, just add the col parameter... "&{sortList:col}" becomes "&col"
-				url = url.replace(/\{sortList[\s+]?:[\s+]?(.*)\}/g, arry.length ? arry.join('&') : col );
-			}
+			var url = getAjaxUrl(table, c),
+			tc = table.config;
 			if ( url !== '' ) {
-				// loading icon
-				$.tablesorter.isProcessing(table, true);
-				$(document).ajaxError(function(e, xhr, settings, exception) {
-					renderAjax(null, table, c, exception);
+				if (tc.showProcessing) {
+					$.tablesorter.isProcessing(table, true); // show loading icon
+				}
+				$(document).bind('ajaxError.pager', function(e, xhr, settings, exception) {
+					if (settings.url === url) {
+						renderAjax(null, table, c, exception);
+						$(document).unbind('ajaxError.pager');
+					}
 				});
 				$.getJSON(url, function(data) {
 					renderAjax(data, table, c);
+					$(document).unbind('ajaxError.pager');
 				});
 			}
+		},
+		
+		getAjaxUrl = function(table, c) {
+			var url = (c.ajaxUrl) ? c.ajaxUrl.replace(/\{page\}/g, c.page).replace(/\{size\}/g, c.size) : '',
+			sl = table.config.sortList,
+			fl = c.currentFilters || [],
+			sortCol = url.match(/\{sortList[\s+]?:[\s+]?([^}]*)\}/),
+			filterCol = url.match(/\{filterList[\s+]?:[\s+]?([^}]*)\}/),
+			arry = [];
+			if (sortCol) {
+				sortCol = sortCol[1];
+				$.each(sl, function(i,v){
+					arry.push(sortCol + '[' + v[0] + ']=' + v[1]);
+				});
+				// if the arry is empty, just add the col parameter... "&{sortList:col}" becomes "&col"
+				url = url.replace(/\{sortList[\s+]?:[\s+]?([^\}]*)\}/g, arry.length ? arry.join('&') : sortCol );
+			}
+			if (filterCol) {
+				filterCol = filterCol[1];
+				$.each(fl, function(i,v){
+					if (v) {
+						arry.push(filterCol + '[' + i + ']=' + encodeURIComponent(v));
+					}
+				});
+				// if the arry is empty, just add the fcol parameter... "&{filterList:fcol}" becomes "&fcol"
+				url = url.replace(/\{filterList[\s+]?:[\s+]?([^\}]*)\}/g, arry.length ? arry.join('&') : filterCol );
+			}
+			
+			return url;
 		},
 
 		renderTable = function(table, rows, c) {
@@ -329,13 +360,13 @@
 			if ( c.page < 0 || c.page > ( p - 1 ) ) {
 				c.page = 0;
 			}
-			// change if page changed - fixes #182
-			if (c.ajax && $.data(table, 'pagerLastPage') !== c.page) {
+			if (c.ajax) {
 				getAjax(table, c);
 			} else if (!c.ajax) {
 				renderTable(table, table.config.rowsCopy, c);
 			}
 			$.data(table, 'pagerLastPage', c.page);
+			$.data(table, 'pagerUpdateTriggered', true);
 			if (c.initialized) { $(table).trigger('pageMoved', c); }
 		},
 
@@ -411,84 +442,107 @@
 			return this.each(function() {
 				// check if tablesorter has initialized
 				if (!(this.config && this.hasInitialized)) { return; }
-				var config = this.config,
+				var t, ctrls, fxn,
+				config = this.config,
 				c = config.pager = $.extend( {}, $.tablesorterPager.defaults, settings ),
 				table = this,
+				tc = table.config,
 				$t = $(table),
 				pager = $(c.container).addClass('tablesorter-pager').show(); // added in case the pager is reinitialized after being destroyed.
 				config.appender = $this.appender;
+
+				$t
+					.unbind('filterStart.pager filterEnd.pager sortEnd.pager disable.pager enable.pager destroy.pager update.pager')
+					.bind('filterStart.pager', function(e, filters) {
+						c.currentFilters = filters;
+					})
+					// update pager after filter widget completes
+					.bind('filterEnd.pager sortEnd.pager', function() {
+						//Prevent infinite event loops from occuring by setting this in all moveToPage calls and catching it here.
+						if ($.data(table, 'pagerUpdateTriggered')) {
+							$.data(table, 'pagerUpdateTriggered', false);
+							return;
+						}
+						c.page = 0;
+						updatePageDisplay(table, c);
+						moveToPage(table, c);
+						changeHeight(table, c);
+					})
+					.bind('disable.pager', function(){
+						showAllRows(table, c);
+					})
+					.bind('enable.pager', function(){
+						enablePager(table, c, true);
+					})
+					.bind('destroy.pager', function(){
+						destroyPager(table, c);
+					})
+					.bind('update.pager', function(){
+						hideRows(table, c);
+					});
+
+				// clicked controls
+				ctrls = [c.cssFirst, c.cssPrev, c.cssNext, c.cssLast];
+				fxn = [ moveToFirstPage, moveToPrevPage, moveToNextPage, moveToLastPage ];
+				pager.find(ctrls.join(','))
+					.unbind('click.pager')
+					.bind('click.pager', function(e){
+						var i, $this = $(this), l = ctrls.length;
+						if ( !$this.hasClass(c.cssDisabled) ) {
+							for (i = 0; i < l; i++) {
+								if ($this.is(ctrls[i])) {
+									fxn[i](table, c);
+									break;
+								}
+							}
+						}
+						return false;
+					});
+
+				// goto selector
+				if ( pager.find(c.cssGoto).length ) {
+					pager.find(c.cssGoto)
+						.unbind('change')
+						.bind('change', function(){
+							c.page = $(this).val() - 1;
+							moveToPage(table, c);
+						});
+						updatePageDisplay(table, c);
+				}
+
+				// page size selector
+				t = pager.find(c.cssPageSize);
+				if ( t.length ) {
+					t.unbind('change.pager').bind('change.pager', function() {
+						t.val( $(this).val() ); // in case there are more than one pagers
+						if ( !$(this).hasClass(c.cssDisabled) ) {
+							setPageSize(table, parseInt( $(this).val(), 10 ), c);
+							changeHeight(table, c);
+						}
+						return false;
+					});
+				}
+
 				// clear initialized flag
 				c.initialized = false;
+				// before initialization event
+				$t.trigger('pagerBeforeInitialized', c);
+
 				enablePager(table, c, false);
+
 				if ( typeof(c.ajaxUrl) === 'string' ) {
 					// ajax pager; interact with database
 					c.ajax = true;
-					getAjax(table, c);
+					//When filtering with ajax, allow only custom filtering function, disable default filtering since it will be done server side.
+					tc.widgetOptions.filter_serversideFiltering = true;
+					tc.serverSideSorting = true;
+					moveToPage(table, c);
 				} else {
 					c.ajax = false;
 					// Regular pager; all rows stored in memory
 					$(this).trigger("appendCache", true);
 					hideRowsSetup(table, c);
 				}
-
-				// update pager after filter widget completes
-				$(table)
-					.unbind('filterEnd.pager updateComplete.pager ')
-					.bind('filterEnd.pager updateComplete.pager', function() {
-						if ($(this).hasClass('hasFilters')) {
-							c.page = 0;
-							updatePageDisplay(table, c);
-							moveToPage(table, c);
-							changeHeight(table, c);
-						}
-					});
-
-				if ( $(c.cssGoto, pager).length ) {
-					$(c.cssGoto, pager).bind('change', function(){
-						c.page = $(this).val() - 1;
-						moveToPage(table, c);
-					});
-					updatePageDisplay(table, c);
-				}
-				$(c.cssFirst,pager).unbind('click.pager').bind('click.pager', function() {
-					if ( !$(this).hasClass(c.cssDisabled) ) { moveToFirstPage(table, c); }
-					return false;
-				});
-				$(c.cssNext,pager).unbind('click.pager').bind('click.pager', function() {
-					if ( !$(this).hasClass(c.cssDisabled) ) { moveToNextPage(table, c); }
-					return false;
-				});
-				$(c.cssPrev,pager).unbind('click.pager').bind('click.pager', function() {
-					if ( !$(this).hasClass(c.cssDisabled) ) { moveToPrevPage(table, c); }
-					return false;
-				});
-				$(c.cssLast,pager).unbind('click.pager').bind('click.pager', function() {
-					if ( !$(this).hasClass(c.cssDisabled) ) { moveToLastPage(table, c); }
-					return false;
-				});
-				$(c.cssPageSize,pager).unbind('change.pager').bind('change.pager', function() {
-					$(c.cssPageSize,pager).val( $(this).val() ); // in case there are more than one pagers
-					if ( !$(this).hasClass(c.cssDisabled) ) {
-						setPageSize(table, parseInt( $(this).val(), 10 ), c);
-						changeHeight(table, c);
-					}
-					return false;
-				});
-
-				$t
-				.unbind('disable.pager enable.pager destroy.pager update.pager')
-				.bind('disable.pager', function(){
-					showAllRows(table, c);
-				})
-				.bind('enable.pager', function(){
-					enablePager(table, c, true);
-				})
-				.bind('destroy.pager', function(){
-					destroyPager(table, c);
-				})
-				.bind('update.pager', function(){
-					hideRows(table, c);
-				});
 
 				// pager initialized
 				if (!c.ajax) {

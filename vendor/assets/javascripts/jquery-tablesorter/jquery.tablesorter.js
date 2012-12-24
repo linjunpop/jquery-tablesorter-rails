@@ -1,5 +1,5 @@
 /*!
-* TableSorter 2.5.2 - Client-side table sorting with ease!
+* TableSorter 2.6.2 - Client-side table sorting with ease!
 * @requires jQuery v1.2.6+
 *
 * Copyright (c) 2007 Christian Bach
@@ -14,16 +14,17 @@
 * @author Christian Bach/christian.bach@polyester.se
 * @contributor Rob Garrison/https://github.com/Mottie/tablesorter
 */
-/*jshint browser:true, jquery:true, unused:false */
+/*jshint browser:true, jquery:true, unused:false, expr: true */
 /*global console:false, alert:false */
 !(function($) {
 	"use strict";
 	$.extend({
+		/*jshint supernew:true */
 		tablesorter: new function() {
 
 			var ts = this;
 
-			ts.version = "2.5.2";
+			ts.version = "2.6.2";
 
 			ts.parsers = [];
 			ts.widgets = [];
@@ -38,8 +39,10 @@
 				cancelSelection  : true,       // prevent text selection in the header
 				dateFormat       : 'mmddyyyy', // other options: "ddmmyyy" or "yyyymmdd"
 				sortMultiSortKey : 'shiftKey', // key used to select additional columns
+				sortResetKey     : 'ctrlKey',  // key used to remove sorting on a column
 				usNumberFormat   : true,       // false for German "1.234.567,89" or French "1 234 567,89"
 				delayInit        : false,      // if false, the parsed table contents will not update until the first sort
+				serverSideSorting: false,      // if true, server-side sorting should be performed because client-side sorting will be disabled, but the ui and events will still be used.
 
 				// sort options
 				headers          : {},         // set sorter, string, empty, locked order, sortInitialOrder, filter, etc.
@@ -166,7 +169,9 @@
 				var c = table.config,
 					tb = $(table.tBodies).filter(':not(.' + c.cssInfoBlock + ')'),
 					rows, list, l, i, h, ch, p, parsersDebug = "";
-				if ( tb.length === 0) { return; } // In the case of empty tables
+				if ( tb.length === 0) {
+					return c.debug ? log('*Empty table!* Not building a parser cache') : '';
+				}
 				rows = tb[0].rows;
 				if (rows[0]) {
 					list = [];
@@ -208,6 +213,10 @@
 				parsers = tc.parsers,
 				t, v, i, j, k, c, cols, cacheTime, colMax = [];
 				tc.cache = {};
+				// if no parsers found, return - it's an empty table.
+				if (!parsers) {
+					return tc.debug ? log('*Empty table!* Not building a cache') : '';
+				}
 				if (tc.debug) {
 					cacheTime = new Date();
 				}
@@ -309,7 +318,7 @@
 			function computeThIndexes(t) {
 				var matrix = [],
 				lookup = {},
-				trs = $(t).find('thead:eq(0) tr, tfoot tr'),
+				trs = $(t).find('thead:eq(0), tfoot').children('tr'), // children tr in tfoot - see issue #196
 				i, j, k, l, c, cells, rowIndex, cellId, rowSpan, colSpan, firstAvailCol, matrixrow;
 				for (i = 0; i < trs.length; i++) {
 					cells = trs[i].cells;
@@ -454,11 +463,13 @@
 			}
 
 			// sort multiple columns
-/* */
 			function multisort(table) { /*jshint loopfunc:true */
 				var dynamicExp, sortWrapper, col, mx = 0, dir = 0, tc = table.config,
 				sortList = tc.sortList, l = sortList.length, bl = table.tBodies.length,
 				sortTime, i, j, k, c, colMax, cache, lc, s, e, order, orgOrderCol;
+				if (tc.serverSideSorting) {
+					return;
+				}
 				if (tc.debug) { sortTime = new Date(); }
 				for (k = 0; k < bl; k++) {
 					colMax = tc.cache[k].colMax;
@@ -511,7 +522,9 @@
 			ts.construct = function(settings) {
 				return this.each(function() {
 					// if no thead or tbody, or tablesorter is already present, quit
-					if (!this.tHead || this.tBodies.length === 0 || this.hasInitialized === true) { return; }
+					if (!this.tHead || this.tBodies.length === 0 || this.hasInitialized === true) {
+						return (this.config.debug) ? log('stopping initialization! No thead, tbody or tablesorter has already been initialized') : '';
+					}
 					// declare
 					var $cell, $this = $(this),
 						c, i, j, k = '', a, s, o, downTime,
@@ -568,7 +581,7 @@
 							// $cell = $(this);
 							k = !e[c.sortMultiSortKey];
 							// get current column sort order
-							cell.count = (cell.count + 1) % (c.sortReset ? 3 : 2);
+							cell.count = e[c.sortResetKey] ? 2 : (cell.count + 1) % (c.sortReset ? 3 : 2);
 							// reset all sorts on non-current column - issue #30
 							if (c.sortRestart) {
 								i = cell;
@@ -693,6 +706,7 @@
 						// no closest in jQuery v1.2.6 - tbdy = $tb.index( $(cell).closest('tbody') ),$row = $(cell).closest('tr');
 						tbdy = $tb.index( $(cell).parents('tbody').filter(':last') ),
 						$row = $(cell).parents('tr').filter(':last');
+						cell = $(cell)[0]; // in case cell is a jQuery object
 						// tbody may not exist if update is initialized while tbody is removed for processing
 						if ($tb.length && tbdy >= 0) {
 							row = $tb.eq(tbdy).find('tr').index( $row );
@@ -960,19 +974,20 @@
 
 			// used when replacing accented characters during sorting
 			ts.characterEquivalents = {
-				"a" : "\u00e1\u00e0\u00e2\u00e3\u00e4", // áàâãä
-				"A" : "\u00c1\u00c0\u00c2\u00c3\u00c4", // ÁÀÂÃÄ
-				"c" : "\u00e7", // ç
-				"C" : "\u00c7", // Ç
-				"e" : "\u00e9\u00e8\u00ea\u00eb", // éèêë
-				"E" : "\u00c9\u00c8\u00ca\u00cb", // ÉÈÊË
-				"i" : "\u00ed\u00ec\u0130\u00ee\u00ef", // íìİîï
+				"a" : "\u00e1\u00e0\u00e2\u00e3\u00e4\u0105\u00e5", // áàâãäąå
+				"A" : "\u00c1\u00c0\u00c2\u00c3\u00c4\u0104\u00c5", // ÁÀÂÃÄĄÅ
+				"c" : "\u00e7\u0107\u010d", // çćč
+				"C" : "\u00c7\u0106\u010c", // ÇĆČ
+				"e" : "\u00e9\u00e8\u00ea\u00eb\u011b\u0119", // éèêëěę
+				"E" : "\u00c9\u00c8\u00ca\u00cb\u011a\u0118", // ÉÈÊËĚĘ
+				"i" : "\u00ed\u00ec\u0130\u00ee\u00ef\u0131", // íìİîïı
 				"I" : "\u00cd\u00cc\u0130\u00ce\u00cf", // ÍÌİÎÏ
 				"o" : "\u00f3\u00f2\u00f4\u00f5\u00f6", // óòôõö
 				"O" : "\u00d3\u00d2\u00d4\u00d5\u00d6", // ÓÒÔÕÖ
-				"S" : "\u00df", // ß
-				"u" : "\u00fa\u00f9\u00fb\u00fc", // úùûü
-				"U" : "\u00da\u00d9\u00db\u00dc" // ÚÙÛÜ
+				"ss": "\u00df", // ß (s sharp)
+				"SS": "\u1e9e", // ẞ (Capital sharp s)
+				"u" : "\u00fa\u00f9\u00fb\u00fc\u016f", // úùûüů
+				"U" : "\u00da\u00d9\u00db\u00dc\u016e" // ÚÙÛÜŮ
 			};
 			ts.replaceAccents = function(s) {
 				var a, acc = '[', eq = ts.characterEquivalents;
@@ -1080,7 +1095,7 @@
 				// remove previous widgets
 				for (i = 0; i < l; i++){
 					if ( w[i] && w[i].id && (doAll || $.inArray( w[i].id, cw ) < 0) ) {
-						if (c.debug) { log( 'removing ' + w[i].id  ); }
+						if (c.debug) { log( 'Refeshing widgets: Removing ' + w[i].id  ); }
 						if (w[i].hasOwnProperty('remove')) { w[i].remove(table, c, c.widgetOptions); }
 					}
 				}
@@ -1114,7 +1129,11 @@
 
 			ts.formatFloat = function(s, table) {
 				if (typeof(s) !== 'string' || s === '') { return s; }
-				if (table.config.usNumberFormat !== false) {
+				// allow using formatFloat without a table; defaults to US number format
+				var i,
+					t = table && table.config ? table.config.usNumberFormat !== false :
+						typeof table !== "undefined" ? table : true;
+				if (t) {
 					// US Format - 1,234,567.89 -> 1234567.89
 					s = s.replace(/,/g,'');
 				} else {
@@ -1126,14 +1145,14 @@
 					// make (#) into a negative number -> (10) = -10
 					s = s.replace(/^\s*\(/,'-').replace(/\)/,'');
 				}
-				var i = parseFloat(s);
+				i = parseFloat(s);
 				// return the text instead of zero
 				return isNaN(i) ? $.trim(s) : i;
 			};
 
 			ts.isDigit = function(s) {
 				// replace all unwanted chars and match
-				return isNaN(s) ? (/^[\-+(]?\d+[)]?$/).test(s.toString().replace(/[,.'\s]/g, '')) : true;
+				return isNaN(s) ? (/^[\-+(]?\d+[)]?$/).test(s.toString().replace(/[,.'"\s]/g, '')) : true;
 			};
 
 		}()
@@ -1164,7 +1183,7 @@
 	ts.addParser({
 		id: "currency",
 		is: function(s) {
-			return (/^\(?[\u00a3$\u20ac\u00a4\u00a5\u00a2?.]\d+/).test(s); // £$€¤¥¢
+			return (/^\(?\d+[\u00a3$\u20ac\u00a4\u00a5\u00a2?.]|[\u00a3$\u20ac\u00a4\u00a5\u00a2?.]\d+\)?$/).test(s); // £$€¤¥¢
 		},
 		format: function(s, table) {
 			return ts.formatFloat(s.replace(/[^\w,. \-()]/g, ""), table);
@@ -1214,7 +1233,7 @@
 	ts.addParser({
 		id: "percent",
 		is: function(s) {
-			return (/\d%\)?$/).test(s);
+			return (/(\d\s?%|%\s?\d)/).test(s);
 		},
 		format: function(s, table) {
 			return ts.formatFloat(s.replace(/%/g, ""), table);
@@ -1225,7 +1244,8 @@
 	ts.addParser({
 		id: "usLongDate",
 		is: function(s) {
-			return (/^[A-Z]{3,10}\.?\s+\d{1,2},?\s+(\d{4}|'?\d{2})\s+(([0-2]?\d:[0-5]\d)|([0-1]?\d:[0-5]\d\s?([AP]M)))$/i).test(s);
+			// two digit years are not allowed cross-browser
+			return (/^[A-Z]{3,10}\.?\s+\d{1,2},?\s+(\d{4})(\s+\d{1,2}:\d{2}(:\d{2})?(\s+[AP]M)?)?$/i).test(s);
 		},
 		format: function(s, table) {
 			return ts.formatFloat( (new Date(s.replace(/(\S)([AP]M)$/i, "$1 $2")).getTime() || ''), table);
@@ -1236,8 +1256,8 @@
 	ts.addParser({
 		id: "shortDate", // "mmddyyyy", "ddmmyyyy" or "yyyymmdd"
 		is: function(s) {
-			// testing for ####-##-#### - so it's not perfect
-			return (/^(\d{2}|\d{4})[\/\-\,\.\s+]\d{2}[\/\-\.\,\s+](\d{2}|\d{4})$/).test(s);
+			// testing for ####-##-####, so it's not perfect
+			return (/^(\d{1,2}|\d{4})[\/\-\,\.\s+]\d{1,2}[\/\-\.\,\s+](\d{1,2}|\d{4})$/).test(s);
 		},
 		format: function(s, table, cell, cellIndex) {
 			var c = table.config, ci = c.headerList[cellIndex],
