@@ -1,5 +1,5 @@
 /*!
-* TableSorter 2.7.3 - Client-side table sorting with ease!
+* TableSorter 2.7.5 - Client-side table sorting with ease!
 * @requires jQuery v1.2.6+
 *
 * Copyright (c) 2007 Christian Bach
@@ -24,7 +24,7 @@
 
 			var ts = this;
 
-			ts.version = "2.7.3";
+			ts.version = "2.7.5";
 
 			ts.parsers = [];
 			ts.widgets = [];
@@ -160,7 +160,7 @@
 					}
 				}
 				for (i = 1; i < l; i++) {
-					if (ts.parsers[i].is(nodeValue, table, node)) {
+					if (ts.parsers[i].is && ts.parsers[i].is(nodeValue, table, node)) {
 						return ts.parsers[i];
 					}
 				}
@@ -170,7 +170,8 @@
 
 			function buildParserCache(table) {
 				var c = table.config,
-					tb = c.$tbodies,
+					// update table bodies in case we start with an empty table
+					tb = c.$tbodies = c.$table.children('tbody:not(.' + c.cssInfoBlock + ')'),
 					rows, list, l, i, h, ch, p, parsersDebug = "";
 				if ( tb.length === 0) {
 					return c.debug ? log('*Empty table!* Not building a parser cache') : '';
@@ -322,6 +323,7 @@
 			function computeThIndexes(t) {
 				var matrix = [],
 				lookup = {},
+				cols = 0, // determine the number of columns
 				trs = $(t).find('thead:eq(0), tfoot').children('tr'), // children tr in tfoot - see issue #196
 				i, j, k, l, c, cells, rowIndex, cellId, rowSpan, colSpan, firstAvailCol, matrixrow;
 				for (i = 0; i < trs.length; i++) {
@@ -343,6 +345,7 @@
 							}
 						}
 						lookup[cellId] = firstAvailCol;
+						cols = Math.max(firstAvailCol, cols);
 						// add data-column
 						$(c).attr({ 'data-column' : firstAvailCol }); // 'data-row' : rowIndex
 						for (k = rowIndex; k < rowIndex + rowSpan; k++) {
@@ -356,6 +359,7 @@
 						}
 					}
 				}
+				t.config.columns = cols; // may not be accurate if # header columns !== # tbody columns
 				return lookup;
 			}
 
@@ -443,14 +447,25 @@
 				}
 			}
 
+			// automatically add col group, and column sizes if set
 			function fixColumnWidth(table) {
-				if (table.config.widthFixed && $(table).find('colgroup').length === 0) {
-					var colgroup = $('<colgroup>'),
-						overallWidth = $(table).width();
-					$("tr:first td", table.tBodies[0]).each(function() {
-						colgroup.append($('<col>').css('width', parseInt(($(this).width()/overallWidth)*1000, 10)/10 + '%'));
-					});
-					$(table).prepend(colgroup);
+				var $c, c = table.config,
+					$cg = $('<colgroup>'),
+					$cgo = c.$table.find('colgroup'),
+					n = c.columns.length,
+					overallWidth = c.$table.width();
+				$("tr:first td", table.tBodies[0]).each(function(i) {
+					$c = $('<col>');
+					if (c.widthFixed) {
+						$c.css('width', parseInt(($(this).width()/overallWidth)*1000, 10)/10 + '%');
+					}
+					$cg.append($c);
+				});
+				// replace colgroup contents
+				if ($cgo.length) {
+					$cgo.html( $cg.html() );
+				} else {
+					c.$table.prepend( $cg );
 				}
 			}
 
@@ -564,6 +579,9 @@
 					c.$tbodies = $this.children('tbody:not(.' + c.cssInfoBlock + ')');
 					// build headers
 					c.$headers = buildHeaders($t0);
+					// fixate columns if the users supplies the fixedWidth option
+					// do this after theme has been applied
+					fixColumnWidth($t0);
 					// try to auto detect column type, and store in tables config
 					c.parsers = buildParserCache($t0);
 					// build the cache for the tbody cells
@@ -703,7 +721,7 @@
 						multisort($t0);
 						appendToTable($t0);
 					})
-					.bind("update", function(e, resort, callback) {
+					.bind("update updateRows", function(e, resort, callback) {
 						// remove rows/elements before update
 						$(c.selectorRemove, $t0).remove();
 						// rebuild parsers
@@ -804,10 +822,6 @@
 						// apply widget format
 						ts.applyWidget($t0);
 					}
-
-					// fixate columns if the users supplies the fixedWidth option
-					// do this after theme has been applied
-					fixColumnWidth($t0);
 
 					// show processesing icon
 					if (c.showProcessing) {
@@ -1238,7 +1252,7 @@
 	ts.addParser({
 		id: "isoDate",
 		is: function(s) {
-			return (/^\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2}$/).test(s);
+			return (/^\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2}/).test(s);
 		},
 		format: function(s, table) {
 			return ts.formatFloat((s !== "") ? (new Date(s.replace(/-/g, "/")).getTime() || "") : "", table);
@@ -1261,7 +1275,8 @@
 		id: "usLongDate",
 		is: function(s) {
 			// two digit years are not allowed cross-browser
-			return (/^[A-Z]{3,10}\.?\s+\d{1,2},?\s+(\d{4})(\s+\d{1,2}:\d{2}(:\d{2})?(\s+[AP]M)?)?$/i).test(s);
+			// Jan 01, 2013 12:34:56 PM or 01 Jan 2013
+			return (/^[A-Z]{3,10}\.?\s+\d{1,2},?\s+(\d{4})(\s+\d{1,2}:\d{2}(:\d{2})?(\s+[AP]M)?)?$/i).test(s) || (/^\d{1,2}\s+[A-Z]{3,10}\s+\d{4}/i).test(s);
 		},
 		format: function(s, table) {
 			return ts.formatFloat( (new Date(s.replace(/(\S)([AP]M)$/i, "$1 $2")).getTime() || ''), table);
