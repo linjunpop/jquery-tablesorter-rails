@@ -10,7 +10,7 @@ namespace :jquery_tablesorter do
     #
     javascript_dir = 'vendor/assets/javascripts/jquery-tablesorter'
     FileUtils.mkdir_p(javascript_dir)
-    Dir.glob('tablesorter/js/*.js').each do |file|
+    Dir.glob('tablesorter/js/*.js').reject{ |file| file =~ /.min.js\Z/}.each do |file|
       FileUtils.cp file, javascript_dir, :verbose => true
     end
 
