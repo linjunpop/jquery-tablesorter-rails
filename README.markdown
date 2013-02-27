@@ -1,6 +1,7 @@
 # jQuery Table Sorter plugin for Rails
 
 [![Still Maintained](http://stillmaintained.com/linjunpop/jquery-tablesorter-rails.png)](http://stillmaintained.com/linjunpop/jquery-tablesorter-rails)
+[![Gem Version](https://badge.fury.io/rb/jquery-tablesorter.png)](http://badge.fury.io/rb/jquery-tablesorter)
 [![endorse](http://api.coderwall.com/linjunpop/endorsecount.png)](http://coderwall.com/linjunpop)
 
 Simple integration of jquery-tablesorter into the asset pipeline.
