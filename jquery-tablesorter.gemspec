@@ -15,5 +15,5 @@ Gem::Specification.new do |s|
 
   s.files = Dir["{vendor,lib}/**/*"] + ["MIT-LICENSE", "Rakefile", "README.markdown"]
 
-  s.add_dependency "railties", "~> 3.1"
+  s.add_dependency "railties", ">= 3.1, < 5"
 end
