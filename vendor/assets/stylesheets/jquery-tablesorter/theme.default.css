@@ -22,7 +22,8 @@ Default Theme
 	border-bottom: #ccc 2px solid;
 	padding: 0;
 }
-.tablesorter-default tfoot th {
+.tablesorter-default tfoot th,
+.tablesorter-default tfoot td {
 	border: 0;
 }
 .tablesorter-default .header,
@@ -114,6 +115,11 @@ Default Theme
 	background-color: #f2f2f2;
 }
 
+/* caption */
+caption {
+	background: #fff;
+}
+
 /* filter widget */
 .tablesorter-default .tablesorter-filter-row td {
 	background: #eee;
@@ -155,7 +161,7 @@ Default Theme
 /* filters */
 .tablesorter-default .tablesorter-filter {
 	width: 95%;
-	height: inherit;
+	height: auto;
 	margin: 4px;
 	padding: 4px;
 	background-color: #fff;
@@ -168,4 +174,10 @@ Default Theme
 	-moz-transition: height 0.1s ease;
 	-o-transition: height 0.1s ease;
 	transition: height 0.1s ease;
+}
+
+/* ajax error row */
+.tablesorter .tablesorter-errorRow td {
+	cursor: pointer;
+	background-color: #e6bf99;
 }

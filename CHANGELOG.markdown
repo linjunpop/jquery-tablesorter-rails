@@ -1,5 +1,10 @@
 Changelog
 ===
+#### v1.4.1 - themilkman fork
+
+* Upgrade tablesorter to v2.10.8
+* Rails 4 compatibility
+
 #### v1.4.1
 
 * Upgrade tablesorter to v2.7.5

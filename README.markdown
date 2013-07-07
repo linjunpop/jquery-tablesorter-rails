@@ -6,7 +6,7 @@
 
 Simple integration of jquery-tablesorter into the asset pipeline.
 
-Current tablesorter version: 2.7.5 (2/5/2013), [documentation]
+Current tablesorter version: 2.10.8 (6/3/2013), [documentation]
 
 Any issue associate with the js/css files, please report to [Mottie's fork].
 
@@ -94,7 +94,7 @@ pager theme:
 2. Run `rake jquery_tablesorter:update`
 3. Run `rake jquery_tablesorter:sanitize_image_paths`
 4. Update `README.md` and `CHANGELOG.md`
-      
+
 
 [Mottie's fork]: https://github.com/Mottie/tablesorter
 [documentation]: http://mottie.github.com/tablesorter/docs/index.html
