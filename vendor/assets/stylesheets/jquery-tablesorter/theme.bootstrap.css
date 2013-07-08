@@ -71,10 +71,15 @@
 	z-index: 1000;
 }
 
+/* caption */
+caption {
+	background: #fff;
+}
+
 /* filter widget */
 .tablesorter-bootstrap .tablesorter-filter-row .tablesorter-filter {
 	width: 98%;
-	height: inherit;
+	height: auto;
 	margin: 0 auto;
 	padding: 4px 6px;
 	background-color: #fff;
@@ -86,6 +91,10 @@
 	-moz-transition: height 0.1s ease;
 	-o-transition: height 0.1s ease;
 	transition: height 0.1s ease;
+}
+.tablesorter-bootstrap .tablesorter-filter-row .tablesorter-filter.disabled {
+	background: #eee;
+	cursor: not-allowed;
 }
 .tablesorter-bootstrap .tablesorter-filter-row td {
 	background: #eee;
@@ -121,4 +130,10 @@
 }
 .tablesorter-bootstrap .tablesorter-pager .pagedisplay {
 	border: 0;
+}
+
+/* ajax error row */
+.tablesorter .tablesorter-errorRow td {
+	cursor: pointer;
+	background-color: #e6bf99;
 }
